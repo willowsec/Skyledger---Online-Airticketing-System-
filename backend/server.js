@@ -1,5 +1,9 @@
+import dotenv from "dotenv";
+
 import express from "express";
 import mongoose from "mongoose";
+import { connectDB } from "./config/db.js";
+import path from "path";
 
 //for security purpose
 import cors from "cors";
@@ -7,9 +11,14 @@ import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
 
-//for keeping the API keys and other secrets safe
-import dotenv from "dotenv";
-dotenv.config();
+//routes
+import authRoutes from "./routes/auth.route.js";
+
+dotenv.config({
+  path: path.resolve(process.cwd(), ".env"),
+  debug: true,
+  override: true,
+});
 
 const app = express();
 
@@ -36,9 +45,12 @@ app.use(
 app.get("/", (req, res) => {
   res.send("API working");
 });
+app.use("/api/auth", authRoutes);
 
 //Global error handler
 const errorhandler = (err, req, res, next) => {
+  console.error("❌ ERROR:", err); // ADD THIS
+
   const status_code = err.status_code || 500;
 
   const message = status_code === 500 ? "Internal Server Error" : err.message;
@@ -57,12 +69,15 @@ app.get("/error", (req, res, next) => {
   next(err);
 });
 
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log("MongoDB connected");
-    app.listen(process.env.PORT || 5000, () =>
-      console.log(`Server running on port ${process.env.PORT || 5000}`),
-    );
-  })
-  .catch((err) => console.error(err));
+//  Start server properly
+const startServer = async () => {
+  await connectDB();
+
+  const PORT = process.env.PORT || 5000;
+
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+  });
+};
+
+startServer();

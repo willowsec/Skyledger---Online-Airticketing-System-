@@ -25,7 +25,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    passport: { type: String, required: true },
+    passport: { type: String, required: false },
     role: { type: String, enum: ["passenger", "admin"], default: "passenger" }, // he is either a airport admin or a passenger
     isVerified: { type: Boolean, default: false }, // for email verification
     googleId: { type: String }, // for Google OAuth
@@ -36,18 +36,10 @@ const userSchema = new mongoose.Schema(
 );
 
 //Hashing the password before saving the user
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("passwordHash")) {
-    return next();
-  }
+userSchema.pre("save", async function () {
+  if (!this.isModified("passwordHash")) return;
 
-  try {
-    const salt = await bcrypt.genSalt(12);
-    this.passwordHash = await bcrypt.hash(this.passwordHash, salt);
-    next();
-  } catch (error) {
-    next(error);
-  }
+  this.passwordHash = await bcrypt.hash(this.passwordHash, 10);
 });
 
 //comparing passwords for non hashed and hashed passwords
