@@ -137,3 +137,43 @@ export const refresh = async (req, res, next) => {
     next(err);
   }
 };
+
+export const resendOTP = async (req, res, next) => {
+  try {
+    const { userId } = req.body;
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    if (user.isVerified)
+      return res.status(400).json({ message: "Account already verified" });
+
+    const otp = crypto.randomInt(100000, 999999).toString();
+    user.otp = otp;
+    user.otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+    await user.save();
+
+    await sendOTPEmail(user.email, otp);
+    res.json({ message: "OTP resent successfully" });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    if (!user)
+      return res.status(404).json({ message: "No account with this email" });
+
+    const otp = crypto.randomInt(100000, 999999).toString();
+    user.otp = otp;
+    user.otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+    user.isVerified = false; // re-verify to reset password
+    await user.save();
+
+    await sendOTPEmail(email, otp);
+    res.json({ message: "OTP sent", userId: user._id });
+  } catch (err) {
+    next(err);
+  }
+};

@@ -9,10 +9,12 @@ import { generatePNR, calcFare } from "../utils/booking.utils.js";
 import { generateETicketPDF } from "../services/pdf.service.js";
 import { sendBookingConfirmation } from "../services/email.service.js";
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
+const getRazorpayInstance = () => {
+  return new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+  });
+};
 
 // ─── STEP 1: Hold seats (atomic) ──────────────────────────────────────────────
 // Called when user clicks "Continue to passenger details"
