@@ -14,7 +14,7 @@ import rateLimit from "express-rate-limit";
 //routes
 import authRoutes from "./routes/auth.route.js";
 import flightRoutes from "./routes/flight.route.js";
-// import bookingRoutes from './routes/booking.routes.js';
+import bookingRoutes from "./routes/booking.routes.js";
 // import adminRoutes from './routes/admin.routes.js';
 dotenv.config({
   path: path.resolve(process.cwd(), ".env"),
@@ -49,8 +49,9 @@ app.get("/", (req, res) => {
 });
 app.use("/api/auth", authRoutes);
 app.use("/api/flights", flightRoutes);
-// app.use('/api/bookings', bookingRoutes);
+app.use("/api/bookings", bookingRoutes);
 // app.use('/api/admin', adminRoutes);
+
 //Global error handler
 const errorhandler = (err, req, res, next) => {
   console.error("❌ ERROR:", err); // ADD THIS
