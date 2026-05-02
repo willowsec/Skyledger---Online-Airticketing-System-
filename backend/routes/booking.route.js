@@ -8,6 +8,7 @@ import {
   getMyBookings,
   getBookingById,
   cancelBooking,
+  downloadTicket,
 } from "../controllers/booking.controller.js";
 
 const router = Router();
@@ -20,5 +21,6 @@ router.post("/payment-failed", handlePaymentFailure);
 router.get("/my", getMyBookings);
 router.get("/:id", getBookingById);
 router.delete("/:id", cancelBooking);
+router.get("/:id/ticket", downloadTicket);
 
 export default router;

@@ -367,3 +367,27 @@ export const cancelBooking = async (req, res, next) => {
     session.endSession();
   }
 };
+
+export const downloadTicket = async (req, res, next) => {
+  try {
+    const booking = await Booking.findOne({
+      _id: req.params.id,
+      userId: req.user.id,
+    }).populate({ path: "flightId", populate: { path: "airlineId" } });
+    if (!booking) return res.status(404).json({ message: "Booking not found" });
+    if (booking.bookingStatus !== "CONFIRMED")
+      return res
+        .status(400)
+        .json({ message: "Ticket only available for confirmed bookings" });
+
+    const pdfBuffer = await generateETicketPDF(booking);
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${booking.PNR}-eticket.pdf"`,
+    );
+    res.send(pdfBuffer);
+  } catch (err) {
+    next(err);
+  }
+};
