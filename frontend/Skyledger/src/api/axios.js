@@ -1,3 +1,4 @@
+//logic flow : user logs in and gets an access token, the token is stored in a variable and added to the header of every request using an interceptor, when the token expires and we get a 401 error, we try to refresh the token and retry the request with the new token
 import axios from "axios";
 
 const api = axios.create({
@@ -15,6 +16,7 @@ api.interceptors.request.use((cfg) => {
   return cfg;
 });
 
+//This runs when the access token is expired and we get a 401 error, it will try to refresh the token and retry the request
 api.interceptors.response.use(
   (r) => r,
   async (err) => {
@@ -28,3 +30,5 @@ api.interceptors.response.use(
     return Promise.reject(err);
   },
 );
+
+export default api;
