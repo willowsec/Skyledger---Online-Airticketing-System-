@@ -43,11 +43,10 @@ flightSchema.index({ origin: 1, destination: 1, departureTime: 1 });
 flightSchema.index({ status: 1 });
 flightSchema.index({ airlineId: 1, flightNumber: 1 }, { unique: true });
 
-flightSchema.pre("save", function (next) {
+flightSchema.pre("save", function () {
   if (this.arrivalTime <= this.departureTime) {
-    return next(new Error("Arrival time must be after departure time"));
+    throw new Error("Arrival time must be after departure time");
   }
-  next(); // it can cause error if arrival time is before departure time, so we need to check it before saving the flight document
 });
 
 export default mongoose.model("Flight", flightSchema);

@@ -5,7 +5,8 @@
   "scripts": {
     "test": "node --experimental-vm-modules node_modules/.bin/jest",
     "test:watch": "jest --watch",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "seed": "node --experimental-vm-modules scripts/seed.js"
   },
   "keywords": [],
   "author": "",

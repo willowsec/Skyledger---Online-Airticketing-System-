@@ -5,7 +5,7 @@ const airportSchema = new mongoose.Schema({
   name: { type: String, required: true },
   city: { type: String, required: true },
   country: { type: String, required: true },
-  timezone: { type: String, required: true }, // e.g. Asia/Kolkata
+  timezone: { type: String, required: true }, // e.g. Asia/Kolkata/Tokyo
 });
 
-export default mongoose.model("Airport", airportSchema);
+export default mongoose.model("Airport", airportSchema); //export the model to use in other files
