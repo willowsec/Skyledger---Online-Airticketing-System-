@@ -39,7 +39,9 @@ export default function AdminBookings() {
         params: filters,
         responseType: "blob",
       });
-      const url = URL.createObjectURL(new Blob([res.data], { type: "text/csv" }));
+      const url = URL.createObjectURL(
+        new Blob([res.data], { type: "text/csv" }),
+      );
       const link = document.createElement("a");
       link.href = url;
       link.download = `bookings-${Date.now()}.csv`;
@@ -145,33 +147,48 @@ export default function AdminBookings() {
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-text-secondary">
+                  <td
+                    colSpan={8}
+                    className="py-12 text-center text-text-secondary"
+                  >
                     Loading...
                   </td>
                 </tr>
               ) : bookings.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-text-secondary">
+                  <td
+                    colSpan={8}
+                    className="py-12 text-center text-text-secondary"
+                  >
                     No bookings found.
                   </td>
                 </tr>
               ) : (
                 bookings.map((b) => {
-                  const statusClass = STATUS_CLASSES[b.bookingStatus] || STATUS_CLASSES.FAILED;
+                  const statusClass =
+                    STATUS_CLASSES[b.bookingStatus] || STATUS_CLASSES.FAILED;
                   return (
-                    <tr key={b._id} className="hover:bg-bg/50 transition-colors">
+                    <tr
+                      key={b._id}
+                      className="hover:bg-bg/50 transition-colors"
+                    >
                       <td className="py-3 px-4 text-sm font-semibold text-text-primary">
                         {b.PNR}
                       </td>
                       <td className="py-3 px-4">
-                        <div className="text-sm font-medium text-text-primary">{b.userId?.name || "Guest"}</div>
-                        <div className="text-xs text-text-secondary mt-0.5">{b.userId?.email || ""}</div>
+                        <div className="text-sm font-medium text-text-primary">
+                          {b.userId?.name || "Guest"}
+                        </div>
+                        <div className="text-xs text-text-secondary mt-0.5">
+                          {b.userId?.email || ""}
+                        </div>
                       </td>
                       <td className="py-3 px-4 text-xs text-text-secondary font-medium">
                         {b.flightId?.flightNumber || "N/A"}
                       </td>
                       <td className="py-3 px-4 text-sm font-medium">
-                        {b.flightId?.origin || "?"} &rarr; {b.flightId?.destination || "?"}
+                        {b.flightId?.origin || "?"} &rarr;{" "}
+                        {b.flightId?.destination || "?"}
                       </td>
                       <td className="py-3 px-4 text-sm capitalize">
                         {b.cabinClass}
@@ -180,7 +197,9 @@ export default function AdminBookings() {
                         ₹{b.totalAmount?.toLocaleString("en-IN") || 0}
                       </td>
                       <td className="py-3 px-4">
-                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide border ${statusClass}`}>
+                        <span
+                          className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide border ${statusClass}`}
+                        >
                           {b.bookingStatus}
                         </span>
                       </td>
