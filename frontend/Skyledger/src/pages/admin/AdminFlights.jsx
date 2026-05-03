@@ -7,17 +7,6 @@ const fmt = (d) =>
     timeStyle: "short",
   });
 
-const inputStyle = {
-  padding: "8px 11px",
-  borderRadius: 7,
-  border: "1px solid var(--color-border-tertiary)",
-  background: "var(--color-background-primary)",
-  color: "var(--color-text-primary)",
-  fontSize: 13,
-  width: "100%",
-  boxSizing: "border-box",
-};
-
 export default function AdminFlights() {
   const [flights, setFlights] = useState([]);
   const [total, setTotal] = useState(0);
@@ -41,24 +30,31 @@ export default function AdminFlights() {
 
   const load = async () => {
     setLoading(true);
-    const { data } = await api.get("/admin/flights", {
-      params: { search, status, page },
-    });
-    setFlights(data.flights);
-    setTotal(data.total);
-    setLoading(false);
+    try {
+      const { data } = await api.get("/admin/flights", {
+        params: { search, status, page },
+      });
+      setFlights(data.flights || []);
+      setTotal(data.total || 0);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, status, page]);
+
   useEffect(() => {
-    api.get("/admin/airlines").then((r) => setAirlines(r.data));
+    api.get("/admin/airlines").then((r) => setAirlines(r.data)).catch(e => console.error(e));
   }, []);
 
   const cancelFlight = async (id) => {
     if (
-      !confirm("Cancel this flight? All confirmed bookings will be cancelled.")
+      !window.confirm("Cancel this flight? All confirmed bookings will be cancelled.")
     )
       return;
     await api.patch(`/admin/flights/${id}/cancel`);
@@ -66,7 +62,7 @@ export default function AdminFlights() {
   };
 
   const deleteFlight = async (id) => {
-    if (!confirm("Permanently delete this flight?")) return;
+    if (!window.confirm("Permanently delete this flight?")) return;
     await api.delete(`/admin/flights/${id}`);
     load();
   };
@@ -77,70 +73,46 @@ export default function AdminFlights() {
       setShowForm(false);
       load();
     } catch (e) {
-      alert(e.response?.data?.message || "Failed to create flight");
+      window.alert(e.response?.data?.message || "Failed to create flight");
     }
   };
 
-  const STATUS_BADGE = {
-    scheduled: ["#E3EFFE", "#0C447C"],
-    delayed: ["#FAEEDA", "#633806"],
-    cancelled: ["#FCEBEB", "#501313"],
-    completed: ["#E1F5EE", "#085041"],
+  const STATUS_CLASSES = {
+    scheduled: "bg-info/10 text-info border-info/20",
+    delayed: "bg-warning/10 text-warning border-warning/20",
+    cancelled: "bg-error/10 text-error border-error/20",
+    completed: "bg-success/10 text-success border-success/20",
   };
 
   return (
-    <div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 20,
-        }}
-      >
-        <h2 style={{ fontSize: 20, fontWeight: 500 }}>
+    <div className="font-sans">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-h2-section text-text-primary">
           Flights{" "}
-          <span
-            style={{
-              fontSize: 14,
-              fontWeight: 400,
-              color: "var(--color-text-secondary)",
-            }}
-          >
+          <span className="text-body-base font-normal text-text-secondary ml-2">
             ({total})
           </span>
         </h2>
         <button
           onClick={() => setShowForm(true)}
-          style={{
-            padding: "8px 16px",
-            background: "#185FA5",
-            color: "#fff",
-            border: "none",
-            borderRadius: 8,
-            fontSize: 14,
-            fontWeight: 500,
-            cursor: "pointer",
-          }}
+          className="bg-primary hover:bg-accent text-surface px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm flex items-center gap-2"
         >
-          + Add flight
+          <span>+</span> Add flight
         </button>
       </div>
 
       {/* Filters */}
-      <div
-        style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap" }}
-      >
+      <div className="flex flex-wrap gap-3 mb-6">
         <input
-          placeholder="Search flight no. or route…"
+          placeholder="Search flight no. or route..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          style={{ ...inputStyle, width: 240 }}
+          className="w-full sm:w-64 px-4 py-2 rounded-lg border border-slate-200 bg-surface text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all placeholder:text-slate-400"
         />
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value)}
-          style={{ ...inputStyle, width: 160 }}
+          className="w-full sm:w-40 px-4 py-2 rounded-lg border border-slate-200 bg-surface text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
         >
           <option value="">All status</option>
           <option value="scheduled">Scheduled</option>
@@ -151,423 +123,257 @@ export default function AdminFlights() {
       </div>
 
       {/* Table */}
-      <div
-        style={{
-          background: "var(--color-background-secondary)",
-          border: "1px solid var(--color-border-tertiary)",
-          borderRadius: 10,
-          overflow: "hidden",
-        }}
-      >
-        <table
-          style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}
-        >
-          <thead>
-            <tr>
-              {[
-                "Flight",
-                "Airline",
-                "Route",
-                "Departure",
-                "Avail. seats",
-                "Base fare (Eco)",
-                "Status",
-                "Actions",
-              ].map((h) => (
-                <th
-                  key={h}
-                  style={{
-                    padding: "10px 14px",
-                    textAlign: "left",
-                    fontWeight: 500,
-                    color: "var(--color-text-secondary)",
-                    borderBottom: "1px solid var(--color-border-tertiary)",
-                    fontSize: 11,
-                    textTransform: "uppercase",
-                  }}
-                >
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
+      <div className="bg-surface border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse min-w-[800px]">
+            <thead className="bg-bg/50">
               <tr>
-                <td
-                  colSpan={8}
-                  style={{
-                    padding: 32,
-                    textAlign: "center",
-                    color: "var(--color-text-secondary)",
-                  }}
-                >
-                  Loading…
-                </td>
-              </tr>
-            ) : (
-              flights.map((f) => {
-                const [bg, color] =
-                  STATUS_BADGE[f.status] || STATUS_BADGE.scheduled;
-                return (
-                  <tr
-                    key={f._id}
-                    style={{
-                      borderBottom: "1px solid var(--color-border-tertiary)",
-                    }}
+                {[
+                  "Flight",
+                  "Airline",
+                  "Route",
+                  "Departure",
+                  "Avail. seats",
+                  "Base fare (Eco)",
+                  "Status",
+                  "Actions",
+                ].map((h) => (
+                  <th
+                    key={h}
+                    className="py-3 px-4 text-[11px] font-bold text-text-secondary uppercase tracking-wider border-b border-slate-200"
                   >
-                    <td style={{ padding: "10px 14px", fontWeight: 500 }}>
-                      {f.flightNumber}
-                    </td>
-                    <td
-                      style={{
-                        padding: "10px 14px",
-                        color: "var(--color-text-secondary)",
-                      }}
-                    >
-                      {f.airlineId?.name}
-                    </td>
-                    <td style={{ padding: "10px 14px" }}>
-                      {f.origin} → {f.destination}
-                    </td>
-                    <td
-                      style={{
-                        padding: "10px 14px",
-                        color: "var(--color-text-secondary)",
-                        fontSize: 12,
-                      }}
-                    >
-                      {fmt(f.departureTime)}
-                    </td>
-                    <td style={{ padding: "10px 14px", fontSize: 12 }}>
-                      E:{f.availableSeats.economy} / B:
-                      {f.availableSeats.business} / F:{f.availableSeats.first}
-                    </td>
-                    <td style={{ padding: "10px 14px" }}>
-                      ₹{f.baseFare.economy?.toLocaleString("en-IN")}
-                    </td>
-                    <td style={{ padding: "10px 14px" }}>
-                      <span
-                        style={{
-                          padding: "3px 9px",
-                          borderRadius: 20,
-                          fontSize: 11,
-                          fontWeight: 500,
-                          background: bg,
-                          color,
-                        }}
-                      >
-                        {f.status}
-                      </span>
-                    </td>
-                    <td style={{ padding: "10px 14px" }}>
-                      <div style={{ display: "flex", gap: 6 }}>
-                        {f.status === "scheduled" && (
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {loading ? (
+                <tr>
+                  <td colSpan={8} className="py-12 text-center text-text-secondary">
+                    Loading...
+                  </td>
+                </tr>
+              ) : flights.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-12 text-center text-text-secondary">
+                    No flights found.
+                  </td>
+                </tr>
+              ) : (
+                flights.map((f) => {
+                  const statusClass = STATUS_CLASSES[f.status] || STATUS_CLASSES.scheduled;
+                  return (
+                    <tr key={f._id} className="hover:bg-bg/50 transition-colors">
+                      <td className="py-3 px-4 text-sm font-semibold text-text-primary">
+                        {f.flightNumber}
+                      </td>
+                      <td className="py-3 px-4 text-sm text-text-secondary">
+                        {f.airlineId?.name || "Unknown"}
+                      </td>
+                      <td className="py-3 px-4 text-sm font-medium">
+                        {f.origin} &rarr; {f.destination}
+                      </td>
+                      <td className="py-3 px-4 text-xs text-text-secondary">
+                        {fmt(f.departureTime)}
+                      </td>
+                      <td className="py-3 px-4 text-xs text-text-secondary font-medium">
+                        <span className="text-info">E:{f.availableSeats?.economy || 0}</span> /{" "}
+                        <span className="text-primary">B:{f.availableSeats?.business || 0}</span> /{" "}
+                        <span className="text-warning">F:{f.availableSeats?.first || 0}</span>
+                      </td>
+                      <td className="py-3 px-4 text-sm font-medium">
+                        ₹{f.baseFare?.economy?.toLocaleString("en-IN") || 0}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide border ${statusClass}`}>
+                          {f.status}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex gap-2">
+                          {f.status === "scheduled" && (
+                            <button
+                              onClick={() => cancelFlight(f._id)}
+                              className="px-2.5 py-1 rounded text-xs font-semibold text-error bg-transparent border border-error/30 hover:bg-error/5 transition-colors"
+                            >
+                              Cancel
+                            </button>
+                          )}
                           <button
-                            onClick={() => cancelFlight(f._id)}
-                            style={{
-                              padding: "3px 10px",
-                              borderRadius: 5,
-                              border: "1px solid #F09595",
-                              background: "transparent",
-                              color: "#A32D2D",
-                              fontSize: 12,
-                              cursor: "pointer",
-                            }}
+                            onClick={() => deleteFlight(f._id)}
+                            className="px-2.5 py-1 rounded text-xs font-semibold text-text-secondary bg-transparent border border-slate-200 hover:bg-slate-100 transition-colors"
                           >
-                            Cancel
+                            Delete
                           </button>
-                        )}
-                        <button
-                          onClick={() => deleteFlight(f._id)}
-                          style={{
-                            padding: "3px 10px",
-                            borderRadius: 5,
-                            border: "1px solid var(--color-border-secondary)",
-                            background: "transparent",
-                            fontSize: 12,
-                            cursor: "pointer",
-                          }}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Pagination */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          gap: 8,
-          marginTop: 16,
-        }}
-      >
-        {Array.from({ length: Math.ceil(total / 20) }, (_, i) => (
-          <button
-            key={i}
-            onClick={() => setPage(i + 1)}
-            style={{
-              padding: "5px 12px",
-              borderRadius: 6,
-              border: "1px solid var(--color-border-secondary)",
-              background: page === i + 1 ? "#185FA5" : "transparent",
-              color: page === i + 1 ? "#fff" : "inherit",
-              cursor: "pointer",
-              fontSize: 13,
-            }}
-          >
-            {i + 1}
-          </button>
-        ))}
-      </div>
+      {total > 0 && (
+        <div className="flex justify-center items-center gap-2 mt-6">
+          {Array.from({ length: Math.ceil(total / 20) }, (_, i) => (
+            <button
+              key={i}
+              onClick={() => setPage(i + 1)}
+              className={`min-w-[32px] h-8 px-2 rounded-md text-sm font-medium transition-colors border ${
+                page === i + 1
+                  ? "bg-primary text-surface border-primary"
+                  : "bg-surface text-text-secondary border-slate-200 hover:border-primary/30 hover:text-primary"
+              }`}
+            >
+              {i + 1}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Add flight modal */}
       {showForm && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 1000,
-          }}
-        >
-          <div
-            style={{
-              background: "var(--color-background-primary)",
-              borderRadius: 12,
-              padding: 28,
-              width: "100%",
-              maxWidth: 560,
-              maxHeight: "90vh",
-              overflow: "auto",
-            }}
-          >
-            <h3 style={{ fontSize: 18, fontWeight: 500, marginBottom: 20 }}>
-              Add new flight
-            </h3>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 12,
-              }}
-            >
-              {[
-                ["Flight number", "flightNumber", "text", "e.g. AI-201"],
-                ["Origin (IATA)", "origin", "text", "e.g. DEL"],
-                ["Destination", "destination", "text", "e.g. BOM"],
-                ["Stops", "stops", "number", "0"],
-              ].map(([label, key, type, ph]) => (
-                <label
-                  key={key}
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 5,
-                    fontSize: 13,
-                  }}
-                >
-                  {label}
-                  <input
-                    type={type}
-                    placeholder={ph}
-                    value={form[key]}
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-surface rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl border border-slate-100">
+            <div className="p-6 border-b border-slate-100">
+              <h3 className="text-h3-card text-text-primary">Add new flight</h3>
+            </div>
+            
+            <div className="p-6 overflow-y-auto flex-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                {[
+                  ["Flight number", "flightNumber", "text", "e.g. AI-201"],
+                  ["Origin (IATA)", "origin", "text", "e.g. DEL"],
+                  ["Destination", "destination", "text", "e.g. BOM"],
+                  ["Stops", "stops", "number", "0"],
+                ].map(([label, key, type, ph]) => (
+                  <label key={key} className="flex flex-col gap-1.5">
+                    <span className="text-label text-text-secondary uppercase tracking-wider">{label}</span>
+                    <input
+                      type={type}
+                      placeholder={ph}
+                      value={form[key]}
+                      onChange={(e) =>
+                        setForm((p) => ({ ...p, [key]: e.target.value }))
+                      }
+                      className="w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-surface text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
+                    />
+                  </label>
+                ))}
+
+                <label className="flex flex-col gap-1.5">
+                  <span className="text-label text-text-secondary uppercase tracking-wider">Airline</span>
+                  <select
+                    value={form.airlineId}
                     onChange={(e) =>
-                      setForm((p) => ({ ...p, [key]: e.target.value }))
+                      setForm((p) => ({ ...p, airlineId: e.target.value }))
                     }
-                    style={inputStyle}
+                    className="w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-surface text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
+                  >
+                    <option value="">Select airline</option>
+                    {airlines.map((a) => (
+                      <option key={a._id} value={a._id}>
+                        {a.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <div className="hidden sm:block"></div> {/* Spacer */}
+
+                <label className="flex flex-col gap-1.5">
+                  <span className="text-label text-text-secondary uppercase tracking-wider">Departure time</span>
+                  <input
+                    type="datetime-local"
+                    value={form.departureTime}
+                    onChange={(e) =>
+                      setForm((p) => ({ ...p, departureTime: e.target.value }))
+                    }
+                    className="w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-surface text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
                   />
                 </label>
-              ))}
+                <label className="flex flex-col gap-1.5">
+                  <span className="text-label text-text-secondary uppercase tracking-wider">Arrival time</span>
+                  <input
+                    type="datetime-local"
+                    value={form.arrivalTime}
+                    onChange={(e) =>
+                      setForm((p) => ({ ...p, arrivalTime: e.target.value }))
+                    }
+                    className="w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-surface text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
+                  />
+                </label>
+              </div>
 
-              <label
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 5,
-                  fontSize: 13,
-                }}
-              >
-                Airline
-                <select
-                  value={form.airlineId}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, airlineId: e.target.value }))
-                  }
-                  style={inputStyle}
-                >
-                  <option value="">Select airline</option>
-                  {airlines.map((a) => (
-                    <option key={a._id} value={a._id}>
-                      {a.name}
-                    </option>
+              <div className="mb-6">
+                <div className="text-sm font-semibold text-text-primary mb-3">
+                  Base fare (₹)
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  {["economy", "business", "first"].map((cls) => (
+                    <label key={cls} className="flex flex-col gap-1.5">
+                      <span className="text-xs text-text-secondary capitalize">{cls}</span>
+                      <input
+                        type="number"
+                        placeholder="0"
+                        value={form.baseFare[cls]}
+                        onChange={(e) =>
+                          setForm((p) => ({
+                            ...p,
+                            baseFare: { ...p.baseFare, [cls]: e.target.value },
+                          }))
+                        }
+                        className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-surface text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
+                      />
+                    </label>
                   ))}
-                </select>
-              </label>
-
-              <label
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 5,
-                  fontSize: 13,
-                }}
-              >
-                Departure time
-                <input
-                  type="datetime-local"
-                  value={form.departureTime}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, departureTime: e.target.value }))
-                  }
-                  style={inputStyle}
-                />
-              </label>
-              <label
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 5,
-                  fontSize: 13,
-                }}
-              >
-                Arrival time
-                <input
-                  type="datetime-local"
-                  value={form.arrivalTime}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, arrivalTime: e.target.value }))
-                  }
-                  style={inputStyle}
-                />
-              </label>
-            </div>
-
-            <div style={{ marginTop: 14 }}>
-              <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 8 }}>
-                Base fare (₹)
+                </div>
               </div>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr 1fr",
-                  gap: 10,
-                }}
-              >
-                {["economy", "business", "first"].map((cls) => (
-                  <label
-                    key={cls}
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 5,
-                      fontSize: 12,
-                    }}
-                  >
-                    {cls.charAt(0).toUpperCase() + cls.slice(1)}
-                    <input
-                      type="number"
-                      placeholder="0"
-                      value={form.baseFare[cls]}
-                      onChange={(e) =>
-                        setForm((p) => ({
-                          ...p,
-                          baseFare: { ...p.baseFare, [cls]: e.target.value },
-                        }))
-                      }
-                      style={inputStyle}
-                    />
-                  </label>
-                ))}
+
+              <div>
+                <div className="text-sm font-semibold text-text-primary mb-3">
+                  Seat rows per class
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  {["economy", "business", "first"].map((cls) => (
+                    <label key={cls} className="flex flex-col gap-1.5">
+                      <span className="text-xs text-text-secondary capitalize">{cls} rows</span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={form.seatConfig[cls]}
+                        onChange={(e) =>
+                          setForm((p) => ({
+                            ...p,
+                            seatConfig: {
+                              ...p.seatConfig,
+                              [cls]: Number(e.target.value),
+                            },
+                          }))
+                        }
+                        className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-surface text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
+                      />
+                    </label>
+                  ))}
+                </div>
               </div>
             </div>
-
-            <div style={{ marginTop: 14 }}>
-              <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 8 }}>
-                Seat rows per class
-              </div>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr 1fr",
-                  gap: 10,
-                }}
-              >
-                {["economy", "business", "first"].map((cls) => (
-                  <label
-                    key={cls}
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 5,
-                      fontSize: 12,
-                    }}
-                  >
-                    {cls.charAt(0).toUpperCase() + cls.slice(1)} rows
-                    <input
-                      type="number"
-                      min={0}
-                      value={form.seatConfig[cls]}
-                      onChange={(e) =>
-                        setForm((p) => ({
-                          ...p,
-                          seatConfig: {
-                            ...p.seatConfig,
-                            [cls]: Number(e.target.value),
-                          },
-                        }))
-                      }
-                      style={inputStyle}
-                    />
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div
-              style={{
-                display: "flex",
-                gap: 10,
-                marginTop: 20,
-                justifyContent: "flex-end",
-              }}
-            >
+            
+            <div className="p-6 border-t border-slate-100 flex justify-end gap-3 bg-bg/50 rounded-b-2xl">
               <button
                 onClick={() => setShowForm(false)}
-                style={{
-                  padding: "9px 18px",
-                  borderRadius: 8,
-                  border: "1px solid var(--color-border-secondary)",
-                  background: "transparent",
-                  cursor: "pointer",
-                  fontSize: 14,
-                }}
+                className="px-6 py-2.5 rounded-xl border border-slate-200 text-text-secondary hover:text-text-primary hover:bg-slate-100 font-medium transition-colors text-sm"
               >
                 Cancel
               </button>
               <button
                 onClick={submitForm}
-                style={{
-                  padding: "9px 18px",
-                  borderRadius: 8,
-                  background: "#185FA5",
-                  color: "#fff",
-                  border: "none",
-                  cursor: "pointer",
-                  fontSize: 14,
-                  fontWeight: 500,
-                }}
+                className="px-6 py-2.5 rounded-xl bg-primary hover:bg-accent text-surface font-semibold shadow-sm transition-colors text-sm"
               >
                 Create flight
               </button>

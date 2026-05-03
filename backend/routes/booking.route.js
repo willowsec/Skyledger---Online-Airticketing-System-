@@ -9,10 +9,15 @@ import {
   getBookingById,
   cancelBooking,
   downloadTicket,
+  getPublicBooking,
 } from "../controllers/booking.controller.js";
 
 const router = Router();
-router.use(protect); // all booking routes require login
+
+// Public route for QR scanning (must be BEFORE protect middleware)
+router.get("/public/:id", getPublicBooking);
+
+router.use(protect); // all subsequent booking routes require login
 
 router.post("/hold", holdSeats);
 router.post("/initiate", initiateBooking);

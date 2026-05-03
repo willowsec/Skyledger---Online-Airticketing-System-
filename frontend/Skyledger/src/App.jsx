@@ -22,6 +22,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminFlights from "./pages/admin/AdminFlights";
 import AdminBookings from "./pages/admin/AdminBookings";
 import OAuthCallback from "./pages/OAuthCallback";
+import VerifyTicketPage from "./pages/VerifyTicketPage";
 // Pages that should show the Navbar
 function WithNav({ children }) {
   return (
@@ -131,6 +132,9 @@ export default function App() {
             <Route path="flights" element={<AdminFlights />} />
             <Route path="bookings" element={<AdminBookings />} />
           </Route>
+
+          {/* Public Ticket Verification (no navbar) */}
+          <Route path="/verify-ticket/:id" element={<VerifyTicketPage />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

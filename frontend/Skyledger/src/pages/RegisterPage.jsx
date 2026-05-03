@@ -1,96 +1,58 @@
-// src/pages/RegisterPage.jsx
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 
-// Reuse same style objects and components from LoginPage
-// (in a real project you'd put S, LeftPanel, OTPInput in shared files)
+// ── OTP Input component ───────────────────────────────────────────────────────
+function OTPInput({ value, onChange }) {
+  const refs = useRef([]);
+  const digits = value.split("");
 
-const S = {
-  page: {
-    minHeight: "100vh",
-    display: "flex",
-    background: "#0A1628",
-    fontFamily: "'DM Sans', sans-serif",
-  },
-  left: {
-    width: "42%",
-    minHeight: "100vh",
-    background:
-      "linear-gradient(160deg, #0C447C 0%, #185FA5 50%, #0F3D6E 100%)",
-    padding: "48px 44px",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
-    position: "relative",
-    overflow: "hidden",
-  },
-  right: {
-    flex: 1,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "48px 56px",
-    overflowY: "auto",
-  },
-  card: { width: "100%", maxWidth: 420 },
-  label: {
-    display: "block",
-    color: "rgba(255,255,255,0.5)",
-    fontSize: 11,
-    fontWeight: 600,
-    letterSpacing: "0.08em",
-    textTransform: "uppercase",
-    marginBottom: 6,
-  },
-  inputWrap: { position: "relative" },
-  input: {
-    width: "100%",
-    padding: "11px 14px 11px 42px",
-    background: "rgba(255,255,255,0.06)",
-    border: "1px solid rgba(255,255,255,0.1)",
-    borderRadius: 10,
-    color: "#fff",
-    fontSize: 14,
-    outline: "none",
-    fontFamily: "'DM Sans', sans-serif",
-    boxSizing: "border-box",
-    transition: "border-color 0.2s",
-  },
-  icon: {
-    position: "absolute",
-    left: 14,
-    top: "50%",
-    transform: "translateY(-50%)",
-    fontSize: 15,
-    opacity: 0.35,
-    pointerEvents: "none",
-  },
-  btn: {
-    width: "100%",
-    padding: "12px 0",
-    background: "linear-gradient(135deg, #185FA5, #0C447C)",
-    border: "none",
-    borderRadius: 10,
-    color: "#fff",
-    fontFamily: "'DM Sans', sans-serif",
-    fontSize: 15,
-    fontWeight: 500,
-    cursor: "pointer",
-    marginTop: 8,
-    boxShadow: "0 4px 16px rgba(24,95,165,0.35)",
-  },
-  error: {
-    background: "rgba(220,53,69,0.12)",
-    border: "1px solid rgba(220,53,69,0.3)",
-    borderRadius: 8,
-    padding: "10px 14px",
-    color: "#ff8fa3",
-    fontSize: 13,
-    marginBottom: 16,
-  },
-};
+  const handleChange = (i, val) => {
+    if (!/^\d*$/.test(val)) return;
+    const next = [...digits];
+    next[i] = val.slice(-1);
+    onChange(next.join(""));
+    if (val && i < 5) refs.current[i + 1]?.focus();
+  };
+
+  const handleKeyDown = (i, e) => {
+    if (e.key === "Backspace" && !digits[i] && i > 0) {
+      refs.current[i - 1]?.focus();
+    }
+  };
+
+  const handlePaste = (e) => {
+    const pasted = e.clipboardData
+      .getData("text")
+      .replace(/\D/g, "")
+      .slice(0, 6);
+    onChange(pasted.padEnd(6, "").slice(0, 6));
+    refs.current[Math.min(pasted.length, 5)]?.focus();
+    e.preventDefault();
+  };
+
+  return (
+    <div className="flex gap-2 sm:gap-3 my-6">
+      {Array.from({ length: 6 }, (_, i) => (
+        <input
+          key={i}
+          ref={(el) => (refs.current[i] = el)}
+          type="text"
+          inputMode="numeric"
+          value={digits[i] || ""}
+          onChange={(e) => handleChange(i, e.target.value)}
+          onKeyDown={(e) => handleKeyDown(i, e)}
+          onPaste={handlePaste}
+          maxLength={1}
+          className={`flex-1 h-12 sm:h-14 rounded-xl border bg-bg text-text-primary text-xl font-semibold text-center outline-none transition-all ${
+            digits[i] ? "border-accent ring-1 ring-accent/30" : "border-slate-300 focus:border-accent focus:ring-1 focus:ring-accent/30"
+          }`}
+        />
+      ))}
+    </div>
+  );
+}
 
 // Password strength checker
 function PasswordStrength({ password }) {
@@ -101,52 +63,39 @@ function PasswordStrength({ password }) {
     { label: "Special character", pass: /[^A-Za-z0-9]/.test(password) },
   ];
   const score = checks.filter((c) => c.pass).length;
-  const colors = ["#ef4444", "#f97316", "#eab308", "#22c55e"];
+  const colors = ["bg-error", "bg-warning", "bg-yellow-500", "bg-success"];
+  const textColors = ["text-error", "text-warning", "text-yellow-600", "text-success"];
   const labels = ["Weak", "Fair", "Good", "Strong"];
 
   if (!password) return null;
 
   return (
-    <div style={{ marginTop: 8 }}>
-      <div style={{ display: "flex", gap: 4, marginBottom: 6 }}>
+    <div className="mt-2">
+      <div className="flex gap-1 mb-2">
         {[0, 1, 2, 3].map((i) => (
           <div
             key={i}
-            style={{
-              flex: 1,
-              height: 3,
-              borderRadius: 2,
-              background:
-                i < score ? colors[score - 1] : "rgba(255,255,255,0.1)",
-              transition: "background 0.3s",
-            }}
+            className={`flex-1 h-1 rounded-full transition-colors duration-300 ${
+              i < score ? colors[score - 1] : "bg-slate-200"
+            }`}
           />
         ))}
       </div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+      <div className="flex justify-between items-start flex-wrap gap-2">
+        <div className="flex flex-wrap gap-x-3 gap-y-1">
           {checks.map((c) => (
             <span
               key={c.label}
-              style={{
-                fontSize: 11,
-                color: c.pass ? "#5DCAA5" : "rgba(255,255,255,0.3)",
-              }}
+              className={`text-[11px] font-medium flex items-center gap-1 ${
+                c.pass ? "text-success" : "text-slate-400"
+              }`}
             >
-              {c.pass ? "✓" : "○"} {c.label}
+              <span>{c.pass ? "✓" : "○"}</span> {c.label}
             </span>
           ))}
         </div>
         {score > 0 && (
-          <span
-            style={{ fontSize: 11, color: colors[score - 1], fontWeight: 600 }}
-          >
+          <span className={`text-[11px] font-bold uppercase tracking-wider ${textColors[score - 1]}`}>
             {labels[score - 1]}
           </span>
         )}
@@ -155,47 +104,54 @@ function PasswordStrength({ password }) {
   );
 }
 
-// OTP Input (same as LoginPage)
-function OTPInput({ value, onChange }) {
-  const digits = value.split("");
-  const refs = [];
-
+// ── Left decorative panel ─────────────────────────────────────────────────────
+function LeftPanel() {
   return (
-    <div style={{ display: "flex", gap: 10, margin: "20px 0" }}>
-      {Array.from({ length: 6 }, (_, i) => (
-        <input
-          key={i}
-          ref={(el) => (refs[i] = el)}
-          type="text"
-          inputMode="numeric"
-          value={digits[i] || ""}
-          maxLength={1}
-          onChange={(e) => {
-            if (!/^\d*$/.test(e.target.value)) return;
-            const next = [...digits];
-            next[i] = e.target.value.slice(-1);
-            onChange(next.join(""));
-            if (e.target.value && i < 5) refs[i + 1]?.focus();
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Backspace" && !digits[i] && i > 0)
-              refs[i - 1]?.focus();
-          }}
-          style={{
-            flex: 1,
-            height: 52,
-            borderRadius: 10,
-            border: `1px solid ${digits[i] ? "#185FA5" : "rgba(255,255,255,0.12)"}`,
-            background: "rgba(255,255,255,0.06)",
-            color: "#fff",
-            fontSize: 22,
-            fontWeight: 600,
-            textAlign: "center",
-            outline: "none",
-            fontFamily: "'DM Sans', sans-serif",
-          }}
-        />
-      ))}
+    <div className="hidden lg:flex w-[45%] bg-gradient-hero p-12 flex-col justify-between relative overflow-hidden text-surface">
+      {/* Decorative circles */}
+      <div className="absolute -bottom-20 -left-20 w-64 h-64 rounded-full bg-white/5 blur-2xl" />
+      <div className="absolute -top-10 -right-16 w-48 h-48 rounded-full bg-white/5 blur-xl" />
+
+      {/* Logo */}
+      <div className="flex items-center gap-3 relative z-10">
+        <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-2xl backdrop-blur-sm">
+          ✈️
+        </div>
+        <div>
+          <div className="text-xl font-bold tracking-tight">SkyLedger</div>
+          <div className="text-white/60 text-xs font-medium tracking-wide uppercase mt-0.5">
+            Transparent Pricing. Zero Friction.
+          </div>
+        </div>
+      </div>
+
+      {/* Headline */}
+      <div className="relative z-10 my-auto py-12">
+        <h1 className="text-[42px] font-bold leading-[1.15] mb-4 tracking-tight">
+          Your journey<br />
+          <span className="text-info italic font-medium tracking-normal">starts here.</span>
+        </h1>
+        <p className="text-white/70 text-base leading-relaxed max-w-sm">
+          Create your free account and book your first flight in under 5 minutes. OTP verified, always secure.
+        </p>
+      </div>
+
+      {/* Features */}
+      <div className="flex flex-col gap-4 relative z-10">
+        {[
+          ["✅", "Free to register, no credit card needed"],
+          ["🛡️", "OTP email verification"],
+          ["📱", "Manage bookings on any device"],
+          ["🔄", "Cancel with instant refund"],
+        ].map(([icon, label]) => (
+          <div key={label} className="flex items-center gap-3 text-white/80 text-sm font-medium">
+            <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center text-base backdrop-blur-sm">
+              {icon}
+            </div>
+            {label}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -221,12 +177,6 @@ export default function RegisterPage() {
 
   const update = (field) => (e) =>
     setForm((p) => ({ ...p, [field]: e.target.value }));
-  const focus = (e) => {
-    e.target.style.borderColor = "#185FA5";
-  };
-  const blur = (e) => {
-    e.target.style.borderColor = "rgba(255,255,255,0.1)";
-  };
 
   const startResendTimer = () => {
     setResendCountdown(60);
@@ -313,215 +263,62 @@ export default function RegisterPage() {
   };
 
   return (
-    <div style={S.page}>
-      <link
-        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap"
-        rel="stylesheet"
-      />
+    <div className="min-h-screen flex bg-bg font-sans">
+      <LeftPanel />
 
-      {/* Left panel */}
-      <div style={S.left}>
-        <div
-          style={{
-            position: "absolute",
-            bottom: -80,
-            left: -80,
-            width: 260,
-            height: 260,
-            borderRadius: "50%",
-            background: "rgba(255,255,255,0.04)",
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            top: -40,
-            right: -60,
-            width: 180,
-            height: 180,
-            borderRadius: "50%",
-            background: "rgba(255,255,255,0.05)",
-          }}
-        />
-
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            position: "relative",
-            zIndex: 1,
-          }}
-        >
-          <div
-            style={{
-              width: 40,
-              height: 40,
-              background: "rgba(255,255,255,0.15)",
-              borderRadius: 10,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 22,
-            }}
-          >
-            ✈
-          </div>
-          <div>
-            <div style={{ color: "#fff", fontSize: 18, fontWeight: 600 }}>
-              OATS Air
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-12 lg:p-20 relative overflow-y-auto">
+        <div className="w-full max-w-[420px] bg-surface sm:shadow-soft sm:border border-slate-100 rounded-2xl sm:p-10 my-8 sm:my-0">
+          
+          {/* Logo visible only on mobile/tablet */}
+          <div className="flex lg:hidden items-center gap-3 mb-8">
+            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-2xl text-surface">
+              ✈️
             </div>
-            <div style={{ color: "rgba(255,255,255,0.45)", fontSize: 11 }}>
-              Online Air Ticketing System
-            </div>
+            <div className="text-xl font-bold tracking-tight text-text-primary">SkyLedger</div>
           </div>
-        </div>
 
-        <div style={{ position: "relative", zIndex: 1 }}>
-          <div
-            style={{
-              fontSize: 32,
-              fontWeight: 700,
-              color: "#fff",
-              lineHeight: 1.2,
-              marginBottom: 14,
-            }}
-          >
-            Your journey
-            <br />
-            <span style={{ color: "#60C4F8", fontStyle: "italic" }}>
-              starts here.
-            </span>
-          </div>
-          <div
-            style={{
-              color: "rgba(255,255,255,0.55)",
-              fontSize: 14,
-              lineHeight: 1.65,
-            }}
-          >
-            Create your free account and book your first flight in under 5
-            minutes. OTP verified, always secure.
-          </div>
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 12,
-            position: "relative",
-            zIndex: 1,
-          }}
-        >
-          {[
-            ["✅", "Free to register, no credit card needed"],
-            ["🛡️", "OTP email verification"],
-            ["📱", "Manage bookings on any device"],
-            ["🔄", "Cancel with instant refund"],
-          ].map(([icon, label]) => (
-            <div
-              key={label}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                color: "rgba(255,255,255,0.65)",
-                fontSize: 13,
-              }}
-            >
-              <div
-                style={{
-                  width: 30,
-                  height: 30,
-                  background: "rgba(255,255,255,0.1)",
-                  borderRadius: 8,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 14,
-                }}
-              >
-                {icon}
-              </div>
-              {label}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Right panel */}
-      <div style={S.right}>
-        <div style={S.card}>
           {/* ── Step: Register form ── */}
           {step === "register" && (
             <>
-              <div style={{ marginBottom: 24 }}>
-                <div
-                  style={{
-                    fontSize: 26,
-                    fontWeight: 600,
-                    color: "#fff",
-                    marginBottom: 6,
-                  }}
-                >
-                  Create account
-                </div>
-                <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 14 }}>
+              <div className="mb-8">
+                <h2 className="text-[28px] font-bold text-text-primary mb-2 tracking-tight">Create account</h2>
+                <div className="text-text-secondary text-body-sm">
                   Already have an account?{" "}
-                  <Link
-                    to="/login"
-                    style={{
-                      color: "#60C4F8",
-                      textDecoration: "none",
-                      fontWeight: 500,
-                    }}
-                  >
-                    Sign in →
+                  <Link to="/login" className="text-accent font-semibold hover:underline decoration-2 underline-offset-2">
+                    Sign in &rarr;
                   </Link>
                 </div>
               </div>
 
-              {error && <div style={S.error}>{error}</div>}
+              {error && <div className="bg-error/10 border border-error/20 text-error p-3 rounded-lg text-sm mb-5 font-medium">{error}</div>}
 
               <form onSubmit={handleRegister}>
                 {/* Name + Phone */}
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: 12,
-                    marginBottom: 16,
-                  }}
-                >
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                   <div>
-                    <label style={S.label}>Full name</label>
-                    <div style={S.inputWrap}>
-                      <span style={S.icon}>👤</span>
+                    <label className="block text-label text-text-secondary uppercase tracking-wider mb-1.5">Full name</label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 opacity-40">👤</span>
                       <input
                         type="text"
                         value={form.name}
                         placeholder="Your full name"
                         onChange={update("name")}
-                        onFocus={focus}
-                        onBlur={blur}
-                        style={S.input}
+                        className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-bg text-text-primary text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all placeholder:text-slate-400 font-medium"
                         required
                       />
                     </div>
                   </div>
                   <div>
-                    <label style={S.label}>Phone</label>
-                    <div style={S.inputWrap}>
-                      <span style={S.icon}>📱</span>
+                    <label className="block text-label text-text-secondary uppercase tracking-wider mb-1.5">Phone</label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 opacity-40">📱</span>
                       <input
                         type="tel"
                         value={form.phone}
                         placeholder="+91 98765 43210"
                         onChange={update("phone")}
-                        onFocus={focus}
-                        onBlur={blur}
-                        style={S.input}
+                        className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-bg text-text-primary text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all placeholder:text-slate-400 font-medium"
                         required
                       />
                     </div>
@@ -529,90 +326,65 @@ export default function RegisterPage() {
                 </div>
 
                 {/* Email */}
-                <div style={{ marginBottom: 16 }}>
-                  <label style={S.label}>Email address</label>
-                  <div style={S.inputWrap}>
-                    <span style={S.icon}>✉</span>
+                <div className="mb-4">
+                  <label className="block text-label text-text-secondary uppercase tracking-wider mb-1.5">Email address</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 opacity-40">✉️</span>
                     <input
                       type="email"
                       value={form.email}
                       placeholder="you@example.com"
                       onChange={update("email")}
-                      onFocus={focus}
-                      onBlur={blur}
-                      style={S.input}
+                      className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-bg text-text-primary text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all placeholder:text-slate-400 font-medium"
                       required
                     />
                   </div>
                 </div>
 
                 {/* Password */}
-                <div style={{ marginBottom: 16 }}>
-                  <label style={S.label}>Password</label>
-                  <div style={S.inputWrap}>
-                    <span style={S.icon}>🔑</span>
+                <div className="mb-4">
+                  <label className="block text-label text-text-secondary uppercase tracking-wider mb-1.5">Password</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 opacity-40">🔑</span>
                     <input
                       type={showPass ? "text" : "password"}
                       value={form.password}
-                      placeholder="Min 8 chars, 1 uppercase, 1 number, 1 special"
+                      placeholder="Min 8 chars, 1 uppercase..."
                       onChange={update("password")}
-                      onFocus={focus}
-                      onBlur={blur}
-                      style={S.input}
+                      className="w-full pl-11 pr-12 py-3 rounded-xl border border-slate-200 bg-bg text-text-primary text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all placeholder:text-slate-400 font-medium"
                       required
                     />
                     <button
                       type="button"
                       onClick={() => setShowPass((p) => !p)}
-                      style={{
-                        position: "absolute",
-                        right: 12,
-                        top: "50%",
-                        transform: "translateY(-50%)",
-                        background: "none",
-                        border: "none",
-                        color: "rgba(255,255,255,0.35)",
-                        cursor: "pointer",
-                        fontSize: 16,
-                      }}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
                     >
-                      {showPass ? "🙈" : "👁"}
+                      {showPass ? "🙈" : "👁️"}
                     </button>
                   </div>
                   <PasswordStrength password={form.password} />
                 </div>
 
                 {/* Confirm Password */}
-                <div style={{ marginBottom: 20 }}>
-                  <label style={S.label}>Confirm password</label>
-                  <div style={S.inputWrap}>
-                    <span style={S.icon}>🔑</span>
+                <div className="mb-8">
+                  <label className="block text-label text-text-secondary uppercase tracking-wider mb-1.5">Confirm password</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 opacity-40">🔑</span>
                     <input
                       type="password"
                       value={confirmPassword}
                       placeholder="Re-enter your password"
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      onFocus={focus}
-                      onBlur={(e) => {
-                        e.target.style.borderColor =
-                          confirmPassword && confirmPassword !== form.password
-                            ? "#ef4444"
-                            : "rgba(255,255,255,0.1)";
-                      }}
-                      style={{
-                        ...S.input,
-                        borderColor:
-                          confirmPassword && confirmPassword !== form.password
-                            ? "#ef4444"
-                            : "rgba(255,255,255,0.1)",
-                      }}
+                      className={`w-full pl-11 pr-4 py-3 rounded-xl border bg-bg text-text-primary text-sm focus:outline-none transition-all placeholder:text-slate-400 font-medium ${
+                        confirmPassword && confirmPassword !== form.password
+                          ? "border-error focus:border-error focus:ring-1 focus:ring-error"
+                          : "border-slate-200 focus:border-accent focus:ring-1 focus:ring-accent"
+                      }`}
                       required
                     />
                   </div>
                   {confirmPassword && confirmPassword !== form.password && (
-                    <div
-                      style={{ fontSize: 12, color: "#ff8fa3", marginTop: 4 }}
-                    >
+                    <div className="text-xs text-error mt-1.5 font-medium">
                       Passwords do not match
                     </div>
                   )}
@@ -621,86 +393,32 @@ export default function RegisterPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  style={{ ...S.btn, opacity: loading ? 0.7 : 1 }}
+                  className="w-full bg-primary hover:bg-accent text-surface font-semibold py-3.5 rounded-xl shadow-soft hover:shadow-hover transition-all disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  {loading ? "Creating account…" : "Create account →"}
+                  {loading ? "Creating account..." : "Create account \u2192"}
                 </button>
               </form>
 
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  margin: "16px 0",
-                  color: "rgba(255,255,255,0.2)",
-                  fontSize: 12,
-                }}
-              >
-                <div
-                  style={{
-                    flex: 1,
-                    height: 1,
-                    background: "rgba(255,255,255,0.08)",
-                  }}
-                />
-                or sign up with
-                <div
-                  style={{
-                    flex: 1,
-                    height: 1,
-                    background: "rgba(255,255,255,0.08)",
-                  }}
-                />
+              <div className="flex items-center gap-4 my-6">
+                <div className="flex-1 h-px bg-slate-200"></div>
+                <span className="text-xs text-text-secondary font-medium uppercase tracking-wider">or sign up with</span>
+                <div className="flex-1 h-px bg-slate-200"></div>
               </div>
 
-              <button
-                onClick={handleGoogleSignup}
-                style={{
-                  width: "100%",
-                  padding: "11px 0",
-                  background: "rgba(255,255,255,0.06)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: 10,
-                  color: "rgba(255,255,255,0.7)",
-                  fontFamily: "'DM Sans', sans-serif",
-                  fontSize: 14,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 8,
-                }}
+              <button 
+                onClick={handleGoogleSignup} 
+                className="w-full flex items-center justify-center gap-3 bg-surface border border-slate-200 hover:bg-slate-50 text-text-primary font-medium py-3 rounded-xl transition-colors shadow-sm"
               >
-                <svg width="18" height="18" viewBox="0 0 48 48">
-                  <path
-                    fill="#EA4335"
-                    d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"
-                  />
-                  <path
-                    fill="#4285F4"
-                    d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
-                  />
-                  <path
-                    fill="#FBBC05"
-                    d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.29-8.16 2.29-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
-                  />
+                <svg width="20" height="20" viewBox="0 0 48 48">
+                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z" />
+                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.29-8.16 2.29-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
                 </svg>
-                Sign up with Google
+                Google
               </button>
 
-              <p
-                style={{
-                  fontSize: 12,
-                  color: "rgba(255,255,255,0.25)",
-                  textAlign: "center",
-                  marginTop: 16,
-                }}
-              >
+              <p className="text-xs text-text-secondary text-center mt-6">
                 By creating an account you agree to our Terms of Service.
               </p>
             </>
@@ -709,115 +427,40 @@ export default function RegisterPage() {
           {/* ── Step: OTP verification ── */}
           {step === "otp" && (
             <>
-              <div
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                  background: "rgba(29,158,117,0.12)",
-                  border: "1px solid rgba(29,158,117,0.3)",
-                  borderRadius: 20,
-                  padding: "4px 12px",
-                  color: "#5DCAA5",
-                  fontSize: 12,
-                  marginBottom: 16,
-                }}
-              >
-                ✉ Verification email sent
+              <div className="inline-flex items-center gap-2 bg-success/10 border border-success/20 text-success px-3 py-1.5 rounded-full text-xs font-semibold mb-6">
+                <span>✉️</span> Verification email sent
               </div>
-              <div
-                style={{
-                  fontSize: 24,
-                  fontWeight: 600,
-                  color: "#fff",
-                  marginBottom: 6,
-                }}
-              >
-                Check your inbox
-              </div>
-              <div
-                style={{
-                  color: "rgba(255,255,255,0.4)",
-                  fontSize: 14,
-                  marginBottom: 4,
-                }}
-              >
-                We sent a 6-digit OTP to{" "}
-                <span style={{ color: "#fff" }}>{form.email}</span>
-              </div>
-              <div
-                style={{
-                  color: "rgba(255,255,255,0.3)",
-                  fontSize: 12,
-                  marginBottom: 4,
-                }}
-              >
+              <h2 className="text-[28px] font-bold text-text-primary mb-2 tracking-tight">Check your inbox</h2>
+              <p className="text-text-secondary text-body-base mb-1">
+                We sent a 6-digit OTP to <span className="font-semibold text-text-primary">{form.email}</span>
+              </p>
+              <p className="text-xs text-slate-400 mb-6">
                 Check your spam folder if you don't see it within a minute.
-              </div>
+              </p>
 
-              {error && <div style={S.error}>{error}</div>}
+              {error && <div className="bg-error/10 border border-error/20 text-error p-3 rounded-lg text-sm mb-2 font-medium mt-4">{error}</div>}
 
               <form onSubmit={handleVerifyOTP}>
                 <OTPInput value={otp} onChange={setOtp} />
                 <button
                   type="submit"
                   disabled={loading || otp.length !== 6}
-                  style={{
-                    ...S.btn,
-                    opacity: loading || otp.length !== 6 ? 0.5 : 1,
-                  }}
+                  className="w-full bg-primary hover:bg-accent text-surface font-semibold py-3.5 rounded-xl shadow-soft hover:shadow-hover transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loading ? "Verifying…" : "Verify & get started →"}
+                  {loading ? "Verifying..." : "Verify & get started \u2192"}
                 </button>
               </form>
 
-              <div
-                style={{
-                  marginTop: 14,
-                  fontSize: 13,
-                  color: "rgba(255,255,255,0.4)",
-                }}
-              >
+              <div className="mt-6 text-sm text-text-secondary font-medium text-center">
                 Didn't receive it?{" "}
                 <button
                   onClick={handleResendOTP}
                   disabled={resendCountdown > 0}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color:
-                      resendCountdown > 0
-                        ? "rgba(255,255,255,0.25)"
-                        : "#60C4F8",
-                    cursor: resendCountdown > 0 ? "default" : "pointer",
-                    fontSize: 13,
-                    padding: 0,
-                  }}
+                  className={`font-semibold ${resendCountdown > 0 ? "text-slate-400 cursor-not-allowed" : "text-accent hover:underline decoration-2 underline-offset-2"}`}
                 >
-                  {resendCountdown > 0
-                    ? `Resend in ${resendCountdown}s`
-                    : "Resend OTP"}
+                  {resendCountdown > 0 ? `Resend in ${resendCountdown}s` : "Resend OTP"}
                 </button>
               </div>
-              <button
-                onClick={() => {
-                  setStep("register");
-                  setOtp("");
-                  setError("");
-                }}
-                style={{
-                  display: "block",
-                  marginTop: 10,
-                  background: "none",
-                  border: "none",
-                  color: "rgba(255,255,255,0.35)",
-                  cursor: "pointer",
-                  fontSize: 13,
-                  padding: 0,
-                }}
-              >
-                ← Back to registration
-              </button>
             </>
           )}
         </div>

@@ -1,117 +1,7 @@
-// src/pages/LoginPage.jsx
 import { useState, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
-
-// ── Shared styles ─────────────────────────────────────────────────────────────
-const S = {
-  page: {
-    minHeight: "100vh",
-    display: "flex",
-    background: "#0A1628",
-    fontFamily: "'DM Sans', sans-serif",
-  },
-  left: {
-    width: "42%",
-    minHeight: "100vh",
-    background:
-      "linear-gradient(160deg, #0C447C 0%, #185FA5 50%, #0F3D6E 100%)",
-    padding: "48px 44px",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
-    position: "relative",
-    overflow: "hidden",
-  },
-  right: {
-    flex: 1,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "48px 56px",
-  },
-  card: { width: "100%", maxWidth: 400 },
-  label: {
-    display: "block",
-    color: "rgba(255,255,255,0.5)",
-    fontSize: 11,
-    fontWeight: 600,
-    letterSpacing: "0.08em",
-    textTransform: "uppercase",
-    marginBottom: 6,
-  },
-  inputWrap: { position: "relative" },
-  input: {
-    width: "100%",
-    padding: "11px 14px 11px 42px",
-    background: "rgba(255,255,255,0.06)",
-    border: "1px solid rgba(255,255,255,0.1)",
-    borderRadius: 10,
-    color: "#fff",
-    fontSize: 14,
-    outline: "none",
-    fontFamily: "'DM Sans', sans-serif",
-    boxSizing: "border-box",
-    transition: "border-color 0.2s",
-  },
-  icon: {
-    position: "absolute",
-    left: 14,
-    top: "50%",
-    transform: "translateY(-50%)",
-    fontSize: 15,
-    opacity: 0.35,
-    pointerEvents: "none",
-  },
-  btn: {
-    width: "100%",
-    padding: "12px 0",
-    background: "linear-gradient(135deg, #185FA5, #0C447C)",
-    border: "none",
-    borderRadius: 10,
-    color: "#fff",
-    fontFamily: "'DM Sans', sans-serif",
-    fontSize: 15,
-    fontWeight: 500,
-    cursor: "pointer",
-    marginTop: 8,
-    boxShadow: "0 4px 16px rgba(24,95,165,0.35)",
-  },
-  btnSecondary: {
-    width: "100%",
-    padding: "11px 0",
-    background: "rgba(255,255,255,0.06)",
-    border: "1px solid rgba(255,255,255,0.1)",
-    borderRadius: 10,
-    color: "rgba(255,255,255,0.7)",
-    fontFamily: "'DM Sans', sans-serif",
-    fontSize: 14,
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-  },
-  error: {
-    background: "rgba(220,53,69,0.12)",
-    border: "1px solid rgba(220,53,69,0.3)",
-    borderRadius: 8,
-    padding: "10px 14px",
-    color: "#ff8fa3",
-    fontSize: 13,
-    marginBottom: 16,
-  },
-  success: {
-    background: "rgba(29,158,117,0.12)",
-    border: "1px solid rgba(29,158,117,0.3)",
-    borderRadius: 8,
-    padding: "10px 14px",
-    color: "#5DCAA5",
-    fontSize: 13,
-    marginBottom: 16,
-  },
-};
 
 // ── OTP Input component ───────────────────────────────────────────────────────
 function OTPInput({ value, onChange }) {
@@ -143,7 +33,7 @@ function OTPInput({ value, onChange }) {
   };
 
   return (
-    <div style={{ display: "flex", gap: 10, margin: "20px 0" }}>
+    <div className="flex gap-2 sm:gap-3 my-6">
       {Array.from({ length: 6 }, (_, i) => (
         <input
           key={i}
@@ -155,20 +45,9 @@ function OTPInput({ value, onChange }) {
           onKeyDown={(e) => handleKeyDown(i, e)}
           onPaste={handlePaste}
           maxLength={1}
-          style={{
-            flex: 1,
-            height: 52,
-            borderRadius: 10,
-            border: "1px solid rgba(255,255,255,0.12)",
-            background: "rgba(255,255,255,0.06)",
-            color: "#fff",
-            fontSize: 22,
-            fontWeight: 600,
-            textAlign: "center",
-            outline: "none",
-            fontFamily: "'DM Sans', sans-serif",
-            borderColor: digits[i] ? "#185FA5" : "rgba(255,255,255,0.12)",
-          }}
+          className={`flex-1 h-12 sm:h-14 rounded-xl border bg-bg text-text-primary text-xl font-semibold text-center outline-none transition-all ${
+            digits[i] ? "border-accent ring-1 ring-accent/30" : "border-slate-300 focus:border-accent focus:ring-1 focus:ring-accent/30"
+          }`}
         />
       ))}
     </div>
@@ -178,132 +57,45 @@ function OTPInput({ value, onChange }) {
 // ── Left decorative panel ─────────────────────────────────────────────────────
 function LeftPanel() {
   return (
-    <div style={S.left}>
+    <div className="hidden lg:flex w-[45%] bg-gradient-hero p-12 flex-col justify-between relative overflow-hidden text-surface">
       {/* Decorative circles */}
-      <div
-        style={{
-          position: "absolute",
-          bottom: -80,
-          left: -80,
-          width: 260,
-          height: 260,
-          borderRadius: "50%",
-          background: "rgba(255,255,255,0.04)",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          top: -40,
-          right: -60,
-          width: 180,
-          height: 180,
-          borderRadius: "50%",
-          background: "rgba(255,255,255,0.05)",
-        }}
-      />
+      <div className="absolute -bottom-20 -left-20 w-64 h-64 rounded-full bg-white/5 blur-2xl" />
+      <div className="absolute -top-10 -right-16 w-48 h-48 rounded-full bg-white/5 blur-xl" />
 
       {/* Logo */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          position: "relative",
-          zIndex: 1,
-        }}
-      >
-        <div
-          style={{
-            width: 40,
-            height: 40,
-            background: "rgba(255,255,255,0.15)",
-            borderRadius: 10,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 22,
-          }}
-        >
-          ✈
+      <div className="flex items-center gap-3 relative z-10">
+        <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-2xl backdrop-blur-sm">
+          ✈️
         </div>
         <div>
-          <div style={{ color: "#fff", fontSize: 18, fontWeight: 600 }}>
-            OATS Air
-          </div>
-          <div style={{ color: "rgba(255,255,255,0.45)", fontSize: 11 }}>
-            Online Air Ticketing System
+          <div className="text-xl font-bold tracking-tight">SkyLedger</div>
+          <div className="text-white/60 text-xs font-medium tracking-wide uppercase mt-0.5">
+            Transparent Pricing. Zero Friction.
           </div>
         </div>
       </div>
 
       {/* Headline */}
-      <div style={{ position: "relative", zIndex: 1 }}>
-        <div
-          style={{
-            fontSize: 36,
-            fontWeight: 700,
-            color: "#fff",
-            lineHeight: 1.2,
-            marginBottom: 14,
-          }}
-        >
-          Fly anywhere,
-          <br />
-          <span style={{ color: "#60C4F8", fontStyle: "italic" }}>
-            seamlessly.
-          </span>
-        </div>
-        <div
-          style={{
-            color: "rgba(255,255,255,0.55)",
-            fontSize: 14,
-            lineHeight: 1.6,
-          }}
-        >
-          Real-time seat selection, instant PDF e-tickets, and secure Razorpay
-          payments.
-        </div>
+      <div className="relative z-10 my-auto py-12">
+        <h1 className="text-[42px] font-bold leading-[1.15] mb-4 tracking-tight">
+          Fly anywhere,<br />
+          <span className="text-info italic font-medium tracking-normal">seamlessly.</span>
+        </h1>
+        <p className="text-white/70 text-base leading-relaxed max-w-sm">
+          Real-time seat selection, instant PDF e-tickets, and secure Razorpay payments.
+        </p>
       </div>
 
       {/* Features */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 12,
-          position: "relative",
-          zIndex: 1,
-        }}
-      >
+      <div className="flex flex-col gap-4 relative z-10">
         {[
           ["🔒", "JWT + bcrypt secured"],
           ["💺", "Interactive seat map"],
           ["📄", "Instant PDF e-ticket"],
           ["💳", "UPI / Card / Net Banking"],
         ].map(([icon, label]) => (
-          <div
-            key={label}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              color: "rgba(255,255,255,0.65)",
-              fontSize: 13,
-            }}
-          >
-            <div
-              style={{
-                width: 30,
-                height: 30,
-                background: "rgba(255,255,255,0.1)",
-                borderRadius: 8,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 15,
-              }}
-            >
+          <div key={label} className="flex items-center gap-3 text-white/80 text-sm font-medium">
+            <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center text-base backdrop-blur-sm">
               {icon}
             </div>
             {label}
@@ -356,9 +148,7 @@ export default function LoginPage() {
       login(data.accessToken, data.user);
       navigate(data.user.role === "admin" ? "/admin" : from, { replace: true });
     } catch (err) {
-      setError(
-        err.response?.data?.message || "Login failed. Please try again.",
-      );
+      setError(err.response?.data?.message || "Login failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -415,69 +205,49 @@ export default function LoginPage() {
     window.location.href = `${import.meta.env.VITE_API_URL}/auth/google`;
   };
 
-  const inputFocus = (e) => {
-    e.target.style.borderColor = "#185FA5";
-  };
-  const inputBlur = (e) => {
-    e.target.style.borderColor = "rgba(255,255,255,0.1)";
-  };
-
   return (
-    <div style={S.page}>
-      <link
-        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap"
-        rel="stylesheet"
-      />
+    <div className="min-h-screen flex bg-bg font-sans">
       <LeftPanel />
 
-      <div style={S.right}>
-        <div style={S.card}>
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-12 lg:p-20 relative">
+        <div className="w-full max-w-[420px] bg-surface sm:shadow-soft sm:border border-slate-100 rounded-2xl sm:p-10">
+          
+          {/* Logo visible only on mobile/tablet */}
+          <div className="flex lg:hidden items-center gap-3 mb-8">
+            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-2xl text-surface">
+              ✈️
+            </div>
+            <div className="text-xl font-bold tracking-tight text-text-primary">SkyLedger</div>
+          </div>
+
           {/* ── Step: Login form ── */}
           {step === "login" && (
             <>
-              <div style={{ marginBottom: 28 }}>
-                <div
-                  style={{
-                    fontSize: 26,
-                    fontWeight: 600,
-                    color: "#fff",
-                    marginBottom: 6,
-                  }}
-                >
-                  Welcome back
-                </div>
-                <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 14 }}>
+              <div className="mb-8">
+                <h2 className="text-[28px] font-bold text-text-primary mb-2 tracking-tight">Welcome back</h2>
+                <div className="text-text-secondary text-body-sm">
                   Don't have an account?{" "}
-                  <Link
-                    to="/register"
-                    style={{
-                      color: "#60C4F8",
-                      textDecoration: "none",
-                      fontWeight: 500,
-                    }}
-                  >
-                    Sign up free →
+                  <Link to="/register" className="text-accent font-semibold hover:underline decoration-2 underline-offset-2">
+                    Sign up free &rarr;
                   </Link>
                 </div>
               </div>
 
-              {error && <div style={S.error}>{error}</div>}
-              {message && <div style={S.success}>{message}</div>}
+              {error && <div className="bg-error/10 border border-error/20 text-error p-3 rounded-lg text-sm mb-5 font-medium">{error}</div>}
+              {message && <div className="bg-success/10 border border-success/20 text-success p-3 rounded-lg text-sm mb-5 font-medium">{message}</div>}
 
               <form onSubmit={handleLogin}>
                 {/* Email */}
-                <div style={{ marginBottom: 16 }}>
-                  <label style={S.label}>Email address</label>
-                  <div style={S.inputWrap}>
-                    <span style={S.icon}>✉</span>
+                <div className="mb-5">
+                  <label className="block text-label text-text-secondary uppercase tracking-wider mb-1.5">Email address</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 opacity-40">✉️</span>
                     <input
                       type="email"
                       value={email}
                       placeholder="you@example.com"
                       onChange={(e) => setEmail(e.target.value)}
-                      onFocus={inputFocus}
-                      onBlur={inputBlur}
-                      style={S.input}
+                      className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-bg text-text-primary text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all placeholder:text-slate-400 font-medium"
                       autoComplete="email"
                       required
                     />
@@ -485,54 +255,35 @@ export default function LoginPage() {
                 </div>
 
                 {/* Password */}
-                <div style={{ marginBottom: 8 }}>
-                  <label style={S.label}>Password</label>
-                  <div style={S.inputWrap}>
-                    <span style={S.icon}>🔑</span>
+                <div className="mb-2">
+                  <label className="block text-label text-text-secondary uppercase tracking-wider mb-1.5">Password</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 opacity-40">🔑</span>
                     <input
                       type={showPass ? "text" : "password"}
                       value={password}
                       placeholder="••••••••"
                       onChange={(e) => setPassword(e.target.value)}
-                      onFocus={inputFocus}
-                      onBlur={inputBlur}
-                      style={S.input}
+                      className="w-full pl-11 pr-12 py-3 rounded-xl border border-slate-200 bg-bg text-text-primary text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all placeholder:text-slate-400 font-medium"
                       autoComplete="current-password"
                       required
                     />
                     <button
                       type="button"
                       onClick={() => setShowPass((p) => !p)}
-                      style={{
-                        position: "absolute",
-                        right: 12,
-                        top: "50%",
-                        transform: "translateY(-50%)",
-                        background: "none",
-                        border: "none",
-                        color: "rgba(255,255,255,0.35)",
-                        cursor: "pointer",
-                        fontSize: 16,
-                      }}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
                     >
-                      {showPass ? "🙈" : "👁"}
+                      {showPass ? "🙈" : "👁️"}
                     </button>
                   </div>
                 </div>
 
                 {/* Forgot password */}
-                <div style={{ textAlign: "right", marginBottom: 20 }}>
+                <div className="text-right mb-6">
                   <button
                     type="button"
                     onClick={() => setStep("forgot")}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      color: "#60C4F8",
-                      fontSize: 13,
-                      cursor: "pointer",
-                      padding: 0,
-                    }}
+                    className="text-accent text-sm font-semibold hover:underline decoration-2 underline-offset-2"
                   >
                     Forgot password?
                   </button>
@@ -541,59 +292,29 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  style={{ ...S.btn, opacity: loading ? 0.7 : 1 }}
+                  className="w-full bg-primary hover:bg-accent text-surface font-semibold py-3.5 rounded-xl shadow-soft hover:shadow-hover transition-all disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  {loading ? "Signing in…" : "Sign in →"}
+                  {loading ? "Signing in..." : "Sign in \u2192"}
                 </button>
               </form>
 
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  margin: "16px 0",
-                  color: "rgba(255,255,255,0.2)",
-                  fontSize: 12,
-                }}
-              >
-                <div
-                  style={{
-                    flex: 1,
-                    height: 1,
-                    background: "rgba(255,255,255,0.08)",
-                  }}
-                />
-                or continue with
-                <div
-                  style={{
-                    flex: 1,
-                    height: 1,
-                    background: "rgba(255,255,255,0.08)",
-                  }}
-                />
+              <div className="flex items-center gap-4 my-6">
+                <div className="flex-1 h-px bg-slate-200"></div>
+                <span className="text-xs text-text-secondary font-medium uppercase tracking-wider">or continue with</span>
+                <div className="flex-1 h-px bg-slate-200"></div>
               </div>
 
-              <button onClick={handleGoogleLogin} style={S.btnSecondary}>
-                <svg width="18" height="18" viewBox="0 0 48 48">
-                  <path
-                    fill="#EA4335"
-                    d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"
-                  />
-                  <path
-                    fill="#4285F4"
-                    d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
-                  />
-                  <path
-                    fill="#FBBC05"
-                    d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.29-8.16 2.29-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
-                  />
+              <button 
+                onClick={handleGoogleLogin} 
+                className="w-full flex items-center justify-center gap-3 bg-surface border border-slate-200 hover:bg-slate-50 text-text-primary font-medium py-3 rounded-xl transition-colors shadow-sm"
+              >
+                <svg width="20" height="20" viewBox="0 0 48 48">
+                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z" />
+                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.29-8.16 2.29-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
                 </svg>
-                Continue with Google
+                Google
               </button>
             </>
           )}
@@ -602,55 +323,29 @@ export default function LoginPage() {
           {step === "forgot" && (
             <>
               <button
-                onClick={() => {
-                  setStep("login");
-                  setError("");
-                }}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "rgba(255,255,255,0.4)",
-                  cursor: "pointer",
-                  fontSize: 13,
-                  marginBottom: 24,
-                  padding: 0,
-                }}
+                onClick={() => { setStep("login"); setError(""); }}
+                className="text-text-secondary hover:text-text-primary text-sm font-medium flex items-center gap-1 mb-6 transition-colors"
               >
-                ← Back to login
+                &larr; Back to login
               </button>
-              <div
-                style={{
-                  fontSize: 24,
-                  fontWeight: 600,
-                  color: "#fff",
-                  marginBottom: 6,
-                }}
-              >
-                Reset password
-              </div>
-              <div
-                style={{
-                  color: "rgba(255,255,255,0.4)",
-                  fontSize: 14,
-                  marginBottom: 24,
-                }}
-              >
+              <h2 className="text-[28px] font-bold text-text-primary mb-2 tracking-tight">Reset password</h2>
+              <p className="text-text-secondary text-body-base mb-8">
                 Enter your email and we'll send an OTP to reset your password.
-              </div>
-              {error && <div style={S.error}>{error}</div>}
+              </p>
+              
+              {error && <div className="bg-error/10 border border-error/20 text-error p-3 rounded-lg text-sm mb-5 font-medium">{error}</div>}
+              
               <form onSubmit={handleForgotRequest}>
-                <div style={{ marginBottom: 20 }}>
-                  <label style={S.label}>Email address</label>
-                  <div style={S.inputWrap}>
-                    <span style={S.icon}>✉</span>
+                <div className="mb-6">
+                  <label className="block text-label text-text-secondary uppercase tracking-wider mb-1.5">Email address</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 opacity-40">✉️</span>
                     <input
                       type="email"
                       value={email}
                       placeholder="you@example.com"
                       onChange={(e) => setEmail(e.target.value)}
-                      onFocus={inputFocus}
-                      onBlur={inputBlur}
-                      style={S.input}
+                      className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-bg text-text-primary text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all placeholder:text-slate-400 font-medium"
                       required
                     />
                   </div>
@@ -658,9 +353,9 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  style={{ ...S.btn, opacity: loading ? 0.7 : 1 }}
+                  className="w-full bg-primary hover:bg-accent text-surface font-semibold py-3.5 rounded-xl shadow-soft hover:shadow-hover transition-all disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  {loading ? "Sending OTP…" : "Send OTP →"}
+                  {loading ? "Sending OTP..." : "Send OTP \u2192"}
                 </button>
               </form>
             </>
@@ -669,102 +364,45 @@ export default function LoginPage() {
           {/* ── Step: OTP verification ── */}
           {step === "otp" && (
             <>
-              <div
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                  background: "rgba(29,158,117,0.12)",
-                  border: "1px solid rgba(29,158,117,0.3)",
-                  borderRadius: 20,
-                  padding: "4px 12px",
-                  color: "#5DCAA5",
-                  fontSize: 12,
-                  marginBottom: 16,
-                }}
-              >
-                ✉ OTP sent to {email}
+              <div className="inline-flex items-center gap-2 bg-success/10 border border-success/20 text-success px-3 py-1.5 rounded-full text-xs font-semibold mb-6">
+                <span>✉️</span> OTP sent to {email}
               </div>
-              <div
-                style={{
-                  fontSize: 24,
-                  fontWeight: 600,
-                  color: "#fff",
-                  marginBottom: 6,
-                }}
-              >
-                Verify your email
-              </div>
-              <div
-                style={{
-                  color: "rgba(255,255,255,0.4)",
-                  fontSize: 14,
-                  marginBottom: 4,
-                }}
-              >
+              <h2 className="text-[28px] font-bold text-text-primary mb-2 tracking-tight">Verify your email</h2>
+              <p className="text-text-secondary text-body-base mb-2">
                 Enter the 6-digit code from your inbox
-              </div>
-              {error && <div style={S.error}>{error}</div>}
+              </p>
+              
+              {error && <div className="bg-error/10 border border-error/20 text-error p-3 rounded-lg text-sm mb-2 font-medium mt-4">{error}</div>}
+              
               <form onSubmit={handleVerifyOTP}>
                 <OTPInput value={otp} onChange={setOtp} />
                 <button
                   type="submit"
                   disabled={loading || otp.length !== 6}
-                  style={{
-                    ...S.btn,
-                    opacity: loading || otp.length !== 6 ? 0.5 : 1,
-                  }}
+                  className="w-full bg-primary hover:bg-accent text-surface font-semibold py-3.5 rounded-xl shadow-soft hover:shadow-hover transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loading ? "Verifying…" : "Verify & continue →"}
+                  {loading ? "Verifying..." : "Verify & continue \u2192"}
                 </button>
               </form>
-              <div
-                style={{
-                  marginTop: 14,
-                  fontSize: 13,
-                  color: "rgba(255,255,255,0.4)",
-                }}
-              >
+              
+              <div className="mt-6 text-sm text-text-secondary font-medium text-center">
                 Didn't receive it?{" "}
                 <button
                   onClick={handleResendOTP}
                   disabled={resendCountdown > 0}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color:
-                      resendCountdown > 0
-                        ? "rgba(255,255,255,0.25)"
-                        : "#60C4F8",
-                    cursor: resendCountdown > 0 ? "default" : "pointer",
-                    fontSize: 13,
-                    padding: 0,
-                  }}
+                  className={`font-semibold ${resendCountdown > 0 ? "text-slate-400 cursor-not-allowed" : "text-accent hover:underline decoration-2 underline-offset-2"}`}
                 >
-                  {resendCountdown > 0
-                    ? `Resend in ${resendCountdown}s`
-                    : "Resend OTP"}
+                  {resendCountdown > 0 ? `Resend in ${resendCountdown}s` : "Resend OTP"}
                 </button>
               </div>
-              <button
-                onClick={() => {
-                  setStep("login");
-                  setOtp("");
-                  setError("");
-                }}
-                style={{
-                  display: "block",
-                  marginTop: 10,
-                  background: "none",
-                  border: "none",
-                  color: "rgba(255,255,255,0.35)",
-                  cursor: "pointer",
-                  fontSize: 13,
-                  padding: 0,
-                }}
-              >
-                ← Back to login
-              </button>
+              <div className="text-center mt-4">
+                <button
+                  onClick={() => { setStep("login"); setOtp(""); setError(""); }}
+                  className="text-text-secondary hover:text-text-primary text-sm font-medium transition-colors"
+                >
+                  &larr; Back to login
+                </button>
+              </div>
             </>
           )}
         </div>

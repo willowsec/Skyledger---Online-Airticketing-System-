@@ -48,21 +48,26 @@ export const sendBookingConfirmation = async (to, booking, pdfBuffer) => {
   });
 };
 
-export const sendCancellationEmail = (to, booking) =>
-  transporter.sendMail({
-    from: `"OATS Air" <${process.env.GMAIL_USER}>`,
+export const sendFlightCancelledEmail = async (to, booking, flight) => {
+  ensureConfig();
+  const transporter = createTransporter();
+  return transporter.sendMail({
+    from: `"SkyLedger" <${process.env.GMAIL_USER}>`,
     to,
-    subject: `Booking Cancelled — PNR: ${booking.PNR}`,
+    subject: `Flight Cancelled — ${flight.flightNumber}`,
     html: `
       <div style="font-family:sans-serif;max-width:480px;margin:0 auto">
         <div style="background:#0C447C;padding:20px;border-radius:8px 8px 0 0">
-          <h2 style="color:#fff;margin:0">Booking Cancelled</h2>
+          <h2 style="color:#fff;margin:0">Flight Cancelled</h2>
         </div>
         <div style="padding:20px;border:1px solid #ddd;border-top:none;border-radius:0 0 8px 8px">
-          <p>Your booking <strong>${booking.PNR}</strong> has been cancelled.</p>
-          <p>Refund of <strong>₹${booking.refundAmount?.toLocaleString("en-IN")}</strong> will be credited within 5–7 business days.</p>
-          <p style="color:#666;font-size:12px">OATS Air | This is an automated email.</p>
+          <p>We regret to inform you that flight <strong>${flight.flightNumber}</strong> (${flight.origin} → ${flight.destination}) has been cancelled.</p>
+          <p>Your booking <strong>${booking.PNR}</strong> is affected. A full refund of <strong>₹${booking.totalAmount.toLocaleString("en-IN")}</strong> will be credited to your account within 5–7 business days.</p>
+          <p style="color:#666;font-size:12px">SkyLedger | We apologize for the inconvenience.</p>
         </div>
       </div>
     `,
   });
+};
+
+export const sendCancellationEmail = sendFlightCancelledEmail; // Alias for backward compatibility if any

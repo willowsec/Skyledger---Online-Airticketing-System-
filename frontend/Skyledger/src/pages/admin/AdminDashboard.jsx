@@ -14,37 +14,20 @@ import {
 import api from "../../api/axios";
 
 const STAT_CARD = ({ label, value, sub, up }) => (
-  <div
-    style={{
-      background: "var(--color-background-secondary)",
-      border: "1px solid var(--color-border-tertiary)",
-      borderRadius: 10,
-      padding: "14px 18px",
-    }}
-  >
-    <div
-      style={{
-        fontSize: 11,
-        textTransform: "uppercase",
-        letterSpacing: "0.05em",
-        color: "var(--color-text-secondary)",
-        marginBottom: 6,
-      }}
-    >
+  <div className="bg-surface border border-slate-200 rounded-xl p-6 shadow-sm">
+    <div className="text-xs uppercase tracking-wider text-text-secondary font-semibold mb-2">
       {label}
     </div>
-    <div style={{ fontSize: 24, fontWeight: 500 }}>{value}</div>
+    <div className="text-3xl font-bold text-text-primary">{value}</div>
     {sub && (
       <div
-        style={{
-          fontSize: 11,
-          color: up
-            ? "#0F6E56"
+        className={`text-xs mt-2 font-medium ${
+          up
+            ? "text-success"
             : up === false
-              ? "#A32D2D"
-              : "var(--color-text-secondary)",
-          marginTop: 4,
-        }}
+              ? "text-error"
+              : "text-text-secondary"
+        }`}
       >
         {sub}
       </div>
@@ -53,20 +36,9 @@ const STAT_CARD = ({ label, value, sub, up }) => (
 );
 
 const MONTH_NAMES = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 ];
-const PIE_COLORS = ["#185FA5", "#5DCAA5", "#EF9F27"];
+const PIE_COLORS = ["#1E3A8A", "#0EA5E9", "#F59E0B"];
 const fmtINR = (v) => `₹${(v / 100000).toFixed(1)}L`;
 
 export default function AdminDashboard() {
@@ -102,24 +74,22 @@ export default function AdminDashboard() {
 
   if (loading)
     return (
-      <p style={{ color: "var(--color-text-secondary)" }}>Loading dashboard…</p>
+      <div className="flex justify-center items-center py-20">
+        <p className="text-body-base text-text-secondary animate-pulse">Loading dashboard...</p>
+      </div>
     );
 
   return (
-    <div>
-      <h2 style={{ fontSize: 20, fontWeight: 500, marginBottom: 20 }}>
-        Overview
-      </h2>
+    <div className="font-sans">
+      <div className="flex items-center justify-between mb-8">
+        <h2 className="text-h2-section text-text-primary">Overview</h2>
+        <div className="text-sm font-medium text-text-secondary bg-surface px-4 py-2 rounded-lg border border-slate-200 shadow-sm">
+          Today: {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+        </div>
+      </div>
 
       {/* Stat cards */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-          gap: 14,
-          marginBottom: 24,
-        }}
-      >
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <STAT_CARD
           label="Total bookings"
           value={stats.totalBookings.toLocaleString()}
@@ -146,62 +116,40 @@ export default function AdminDashboard() {
       </div>
 
       {/* Revenue chart */}
-      <div
-        style={{
-          background: "var(--color-background-secondary)",
-          border: "1px solid var(--color-border-tertiary)",
-          borderRadius: 10,
-          padding: 20,
-          marginBottom: 20,
-        }}
-      >
-        <h3 style={{ fontSize: 14, fontWeight: 500, marginBottom: 16 }}>
-          Monthly revenue
-        </h3>
-        <ResponsiveContainer width="100%" height={200}>
-          <BarChart data={chart} barSize={32}>
+      <div className="bg-surface border border-slate-200 rounded-xl p-6 shadow-sm mb-8">
+        <h3 className="text-h3-card text-text-primary mb-6">Monthly revenue</h3>
+        <ResponsiveContainer width="100%" height={250}>
+          <BarChart data={chart} barSize={40}>
             <XAxis
               dataKey="name"
-              tick={{ fontSize: 12 }}
-              axisLine={false}
+              tick={{ fill: '#64748B', fontSize: 12, fontWeight: 500 }}
+              axisLine={{ stroke: '#E2E8F0' }}
               tickLine={false}
+              dy={10}
             />
             <YAxis
               tickFormatter={fmtINR}
-              tick={{ fontSize: 11 }}
+              tick={{ fill: '#64748B', fontSize: 12, fontWeight: 500 }}
               axisLine={false}
               tickLine={false}
-              width={52}
+              width={60}
+              dx={-10}
             />
             <Tooltip
+              cursor={{ fill: '#F1F5F9' }}
+              contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
               formatter={(v) => [`₹${v.toLocaleString("en-IN")}`, "Revenue"]}
             />
-            <Bar dataKey="revenue" fill="#185FA5" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="revenue" fill="#1E3A8A" radius={[6, 6, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 20,
-          marginBottom: 20,
-        }}
-      >
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         {/* Pie chart */}
-        <div
-          style={{
-            background: "var(--color-background-secondary)",
-            border: "1px solid var(--color-border-tertiary)",
-            borderRadius: 10,
-            padding: 20,
-          }}
-        >
-          <h3 style={{ fontSize: 14, fontWeight: 500, marginBottom: 4 }}>
-            Bookings by class
-          </h3>
-          <ResponsiveContainer width="100%" height={200}>
+        <div className="bg-surface border border-slate-200 rounded-xl p-6 shadow-sm">
+          <h3 className="text-h3-card text-text-primary mb-2">Bookings by class</h3>
+          <ResponsiveContainer width="100%" height={250}>
             <PieChart>
               <Pie
                 data={split}
@@ -209,8 +157,9 @@ export default function AdminDashboard() {
                 nameKey="name"
                 cx="50%"
                 cy="50%"
-                outerRadius={70}
-                innerRadius={40}
+                outerRadius={80}
+                innerRadius={50}
+                paddingAngle={5}
               >
                 {split.map((_, i) => (
                   <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
@@ -219,102 +168,61 @@ export default function AdminDashboard() {
               <Legend
                 iconType="circle"
                 iconSize={10}
-                wrapperStyle={{ fontSize: 12 }}
+                wrapperStyle={{ fontSize: 13, fontWeight: 500, color: '#475569' }}
               />
-              <Tooltip formatter={(v, n) => [v, n]} />
+              <Tooltip 
+                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
+                formatter={(v, n) => [v, n]} 
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>
 
         {/* Recent bookings */}
-        <div
-          style={{
-            background: "var(--color-background-secondary)",
-            border: "1px solid var(--color-border-tertiary)",
-            borderRadius: 10,
-            overflow: "hidden",
-          }}
-        >
-          <div
-            style={{
-              padding: "14px 16px",
-              borderBottom: "1px solid var(--color-border-tertiary)",
-              fontSize: 14,
-              fontWeight: 500,
-            }}
-          >
-            Recent bookings
+        <div className="bg-surface border border-slate-200 rounded-xl shadow-sm flex flex-col">
+          <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center">
+            <h3 className="text-h3-card text-text-primary">Recent bookings</h3>
+            <button className="text-sm text-primary font-medium hover:underline">View all</button>
           </div>
-          <div style={{ overflow: "auto", maxHeight: 200 }}>
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                fontSize: 12,
-              }}
-            >
-              <thead>
+          <div className="overflow-auto flex-1">
+            <table className="w-full text-left border-collapse min-w-[400px]">
+              <thead className="bg-bg/50">
                 <tr>
                   {["PNR", "Passenger", "Amount", "Status"].map((h) => (
                     <th
                       key={h}
-                      style={{
-                        padding: "7px 12px",
-                        textAlign: "left",
-                        fontWeight: 500,
-                        color: "var(--color-text-secondary)",
-                        borderBottom: "1px solid var(--color-border-tertiary)",
-                        fontSize: 11,
-                      }}
+                      className="py-3 px-6 text-[11px] font-bold text-text-secondary uppercase tracking-wider border-b border-slate-200"
                     >
                       {h}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody>
-                {stats.recentBookings.map((b) => (
-                  <tr key={b._id}>
-                    <td style={{ padding: "8px 12px", fontWeight: 500 }}>
-                      {b.PNR}
-                    </td>
-                    <td
-                      style={{
-                        padding: "8px 12px",
-                        color: "var(--color-text-secondary)",
-                      }}
-                    >
-                      {b.userId?.name}
-                    </td>
-                    <td style={{ padding: "8px 12px" }}>
-                      ₹{b.totalAmount?.toLocaleString("en-IN")}
-                    </td>
-                    <td style={{ padding: "8px 12px" }}>
-                      <span
-                        style={{
-                          padding: "2px 8px",
-                          borderRadius: 20,
-                          fontSize: 10,
-                          fontWeight: 500,
-                          background:
-                            b.bookingStatus === "CONFIRMED"
-                              ? "#E1F5EE"
-                              : b.bookingStatus === "CANCELLED"
-                                ? "#FCEBEB"
-                                : "#FAEEDA",
-                          color:
-                            b.bookingStatus === "CONFIRMED"
-                              ? "#085041"
-                              : b.bookingStatus === "CANCELLED"
-                                ? "#501313"
-                                : "#412402",
-                        }}
-                      >
-                        {b.bookingStatus}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+              <tbody className="divide-y divide-slate-100">
+                {stats.recentBookings.map((b) => {
+                  let statusClass = "bg-warning/10 text-warning border border-warning/20";
+                  if (b.bookingStatus === "CONFIRMED") statusClass = "bg-success/10 text-success border border-success/20";
+                  if (b.bookingStatus === "CANCELLED") statusClass = "bg-error/10 text-error border border-error/20";
+                  
+                  return (
+                    <tr key={b._id} className="hover:bg-bg/50 transition-colors">
+                      <td className="py-4 px-6 text-sm font-semibold text-text-primary">
+                        {b.PNR}
+                      </td>
+                      <td className="py-4 px-6 text-sm text-text-secondary">
+                        {b.userId?.name || "Guest"}
+                      </td>
+                      <td className="py-4 px-6 text-sm font-medium text-text-primary">
+                        ₹{b.totalAmount?.toLocaleString("en-IN")}
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${statusClass}`}>
+                          {b.bookingStatus}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

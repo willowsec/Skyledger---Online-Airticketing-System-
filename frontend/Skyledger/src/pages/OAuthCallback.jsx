@@ -14,7 +14,7 @@ export default function OAuthCallback() {
     if (!token) return navigate("/login?error=oauth");
     // Decode user from JWT
     const payload = JSON.parse(atob(token.split(".")[1]));
-    login(token, { id: payload.id, role: payload.role });
+    login(token, { id: payload.id, role: payload.role, name: payload.name });
     navigate(payload.role === "admin" ? "/admin" : "/");
   }, []);
 

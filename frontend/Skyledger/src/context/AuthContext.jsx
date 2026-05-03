@@ -22,7 +22,7 @@ export function AuthProvider({ children }) {
         setToken(data.accessToken);
         // Decode user from token payload
         const payload = JSON.parse(atob(data.accessToken.split(".")[1]));
-        setUser({ id: payload.id, role: payload.role });
+        setUser({ id: payload.id, role: payload.role, name: payload.name });
       } catch {
         // No valid session — user stays null
       } finally {

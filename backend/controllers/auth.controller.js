@@ -1,14 +1,13 @@
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
-import User from "../models/user.model.js";
+import User from "../models/User.model.js";
 import { sendOTPEmail } from "../services/email.service.js";
-import { access } from "fs";
 
-const signTokens = (userId, role) => ({
-  accessToken: jwt.sign({ id: userId, role }, process.env.JWT_SECRET, {
+const signTokens = (userId, role, name) => ({
+  accessToken: jwt.sign({ id: userId, role, name }, process.env.JWT_SECRET, {
     expiresIn: "1h",
   }),
-  refreshToken: jwt.sign({ id: userId, role }, process.env.JWT_SECRET, {
+  refreshToken: jwt.sign({ id: userId, role, name }, process.env.JWT_REFRESH_SECRET, {
     expiresIn: "7d",
   }),
 });
@@ -65,7 +64,7 @@ export const verifyOTP = async (req, res, next) => {
     user.otpExpiry = undefined;
     await user.save();
 
-    const { accessToken, refreshToken } = signTokens(user._id, user.role);
+    const { accessToken, refreshToken } = signTokens(user._id, user.role, user.name);
     res.cookie("refreshToken", refreshToken, {
       ...cookieOpts,
       maxAge: 7 * 86400 * 1000,
@@ -98,7 +97,7 @@ export const login = async (req, res, next) => {
         .status(403)
         .json({ message: "Please verify your email first" });
 
-    const { accessToken, refreshToken } = signTokens(user._id, user.role);
+    const { accessToken, refreshToken } = signTokens(user._id, user.role, user.name);
     res.cookie("refreshToken", refreshToken, {
       ...cookieOpts,
       maxAge: 7 * 86400 * 1000,
@@ -131,7 +130,7 @@ export const refresh = async (req, res, next) => {
     const payload = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
     const user = await User.findById(payload.id);
     if (!user) return res.status(401).json({ message: "User not found" });
-    const { accessToken } = signTokens(user._id, user.role);
+    const { accessToken } = signTokens(user._id, user.role, user.name);
     res.json({ accessToken });
   } catch (err) {
     next(err);

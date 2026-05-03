@@ -10,10 +10,10 @@ import { generateETicketPDF } from "../services/pdf.service.js";
 import { sendBookingConfirmation } from "../services/email.service.js";
 
 const getRazorpayInstance = () => {
-  return new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID,
-    key_secret: process.env.RAZORPAY_KEY_SECRET,
-  });
+  const key_id = process.env.RAZORPAY_KEY_ID?.trim();
+  const key_secret = process.env.RAZORPAY_KEY_SECRET?.trim();
+  console.log(`🔑 Using Razorpay Key: ${key_id?.slice(0, 10)}...`);
+  return new Razorpay({ key_id, key_secret });
 };
 
 // ─── STEP 1: Hold seats (atomic) ──────────────────────────────────────────────
@@ -75,6 +75,7 @@ export const holdSeats = async (req, res, next) => {
 // ─── STEP 2: Initiate booking + create Razorpay order ─────────────────────────
 // Called when user submits passenger details form
 export const initiateBooking = async (req, res, next) => {
+  const razorpay = getRazorpayInstance();
   try {
     const { flightId, seatIds, cabinClass, passengers } = req.body;
     const userId = req.user.id;
@@ -100,11 +101,37 @@ export const initiateBooking = async (req, res, next) => {
     const PNR = generatePNR();
 
     // Create Razorpay order (amount in paise)
-    const order = await razorpay.orders.create({
-      amount: totalAmount * 100,
-      currency: "INR",
-      receipt: PNR,
-    });
+    let order;
+    const isMock = process.env.RAZORPAY_KEY_ID === "rzp_test_simulator";
+
+    if (isMock) {
+      console.log("🛠️ Using Mock Payment Gateway (Simulator Mode)");
+      order = {
+        id: `order_mock_${Date.now()}`,
+        amount: totalAmount * 100,
+        currency: "INR",
+        receipt: PNR,
+      };
+    } else {
+      try {
+        order = await razorpay.orders.create({
+          amount: totalAmount * 100,
+          currency: "INR",
+          receipt: PNR,
+        });
+      } catch (rzpErr) {
+        console.error("❌ Razorpay Order Creation Failed:", rzpErr);
+        if (rzpErr.statusCode === 401) {
+          throw Object.assign(
+            new Error(
+              "Payment Gateway Authentication Failed. Please check RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in backend .env",
+            ),
+            { status: 500 },
+          );
+        }
+        throw rzpErr;
+      }
+    }
 
     // Create booking in HOLD state
     const booking = await Booking.create({
@@ -139,6 +166,7 @@ export const initiateBooking = async (req, res, next) => {
       amount: totalAmount,
       currency: "INR",
       keyId: process.env.RAZORPAY_KEY_ID,
+      isMock,
       prefill: {
         // Pre-fill Razorpay modal for UX
         name: passengers[0].name,
@@ -156,19 +184,28 @@ export const verifyPayment = async (req, res, next) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    const { bookingId, razorpayOrderId, razorpayPaymentId, razorpaySignature } =
-      req.body;
+    const {
+      bookingId,
+      razorpayOrderId,
+      razorpayPaymentId,
+      razorpaySignature,
+      isMock,
+    } = req.body;
 
     // ── HMAC signature verification — critical security step ──
-    const expectedSig = crypto
-      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-      .update(`${razorpayOrderId}|${razorpayPaymentId}`)
-      .digest("hex");
+    if (!isMock) {
+      const expectedSig = crypto
+        .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+        .update(`${razorpayOrderId}|${razorpayPaymentId}`)
+        .digest("hex");
 
-    if (expectedSig !== razorpaySignature) {
-      return res
-        .status(400)
-        .json({ message: "Payment verification failed. Possible tampering." });
+      if (expectedSig !== razorpaySignature) {
+        return res.status(400).json({
+          message: "Payment verification failed. Possible tampering.",
+        });
+      }
+    } else {
+      console.log("🛠️ Skipping Signature Verification (Simulator Mode)");
     }
 
     const booking = await Booking.findById(bookingId)
@@ -298,6 +335,7 @@ export const getBookingById = async (req, res, next) => {
 // ─── Cancel booking ───────────────────────────────────────────────────────────
 export const cancelBooking = async (req, res, next) => {
   const session = await mongoose.startSession();
+  const razorpay = getRazorpayInstance();
   session.startTransaction();
   try {
     const booking = await Booking.findOne({
@@ -369,7 +407,6 @@ export const cancelBooking = async (req, res, next) => {
     session.endSession();
   }
 };
-
 export const downloadTicket = async (req, res, next) => {
   try {
     const booking = await Booking.findOne({
@@ -389,6 +426,21 @@ export const downloadTicket = async (req, res, next) => {
       `attachment; filename="${booking.PNR}-eticket.pdf"`,
     );
     res.send(pdfBuffer);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ─── Public verification (for QR scanning) ───────────────────────────────────
+export const getPublicBooking = async (req, res, next) => {
+  try {
+    const booking = await Booking.findById(req.params.id)
+      .populate({ path: "flightId", populate: { path: "airlineId" } })
+      .select("PNR passengers cabinClass bookingStatus flightId createdAt");
+
+    if (!booking) return res.status(404).json({ message: "Booking not found" });
+
+    res.json(booking);
   } catch (err) {
     next(err);
   }

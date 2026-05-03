@@ -10,7 +10,7 @@ export default function BookingSuccessPage() {
 
   useEffect(() => {
     if (!PNR) navigate("/");
-  }, [PNR]);
+  }, [PNR, navigate]);
 
   const downloadTicket = async () => {
     setDownloading(true);
@@ -34,110 +34,60 @@ export default function BookingSuccessPage() {
   };
 
   return (
-    <div
-      style={{
-        maxWidth: 480,
-        margin: "80px auto",
-        padding: "0 16px",
-        textAlign: "center",
-      }}
-    >
-      <div style={{ fontSize: 64, marginBottom: 16 }}>✅</div>
-      <h1 style={{ fontSize: 26, fontWeight: 500, marginBottom: 8 }}>
-        Booking confirmed!
-      </h1>
-      <p
-        style={{
-          fontSize: 15,
-          color: "var(--color-text-secondary)",
-          marginBottom: 24,
-        }}
-      >
-        Your e-ticket has been sent to your email.
-      </p>
+    <div className="min-h-[80vh] flex items-center justify-center font-sans py-12 px-4">
+      <div className="max-w-[480px] w-full bg-surface rounded-2xl p-8 sm:p-10 shadow-soft border border-slate-200 text-center">
+        <div className="text-[72px] leading-none mb-6 drop-shadow-md transform hover:scale-110 transition-transform duration-300">
+          🎉
+        </div>
+        
+        <h1 className="text-[28px] font-bold text-text-primary mb-2 tracking-tight">
+          Booking confirmed!
+        </h1>
+        <p className="text-body-base text-text-secondary mb-8">
+          Your e-ticket has been sent to your email.
+        </p>
 
-      <div
-        style={{
-          background: "var(--color-background-secondary)",
-          borderRadius: 12,
-          padding: 24,
-          border: "1px solid var(--color-border-tertiary)",
-          marginBottom: 24,
-        }}
-      >
-        <div
-          style={{
-            fontSize: 13,
-            color: "var(--color-text-secondary)",
-            marginBottom: 4,
-          }}
-        >
-          Your PNR
+        <div className="bg-bg rounded-xl p-6 border border-slate-200 mb-8 relative overflow-hidden">
+          {/* Decorative dashes simulating ticket edges */}
+          <div className="absolute top-1/2 -left-3 w-6 h-6 bg-surface rounded-full border border-slate-200 -translate-y-1/2"></div>
+          <div className="absolute top-1/2 -right-3 w-6 h-6 bg-surface rounded-full border border-slate-200 -translate-y-1/2"></div>
+          
+          <div className="text-label text-text-secondary uppercase tracking-widest mb-1">
+            Your PNR
+          </div>
+          <div className="text-4xl font-bold tracking-[0.15em] text-primary">
+            {PNR}
+          </div>
+          <div className="text-xs font-medium text-text-tertiary mt-2">
+            Save this for check-in
+          </div>
         </div>
-        <div
-          style={{
-            fontSize: 36,
-            fontWeight: 500,
-            letterSpacing: "0.12em",
-            color: "#185FA5",
-          }}
-        >
-          {PNR}
-        </div>
-        <div
-          style={{
-            fontSize: 12,
-            color: "var(--color-text-tertiary)",
-            marginTop: 6,
-          }}
-        >
-          Save this for check-in
-        </div>
-      </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        <button
-          onClick={downloadTicket}
-          disabled={downloading}
-          style={{
-            padding: "12px 0",
-            background: "#185FA5",
-            color: "#fff",
-            border: "none",
-            borderRadius: 8,
-            fontSize: 15,
-            fontWeight: 500,
-            cursor: "pointer",
-          }}
-        >
-          {downloading ? "Generating PDF…" : "⬇ Download e-ticket"}
-        </button>
-        <Link
-          to="/dashboard"
-          style={{
-            padding: "12px 0",
-            background: "transparent",
-            color: "#185FA5",
-            border: "1px solid #185FA5",
-            borderRadius: 8,
-            fontSize: 15,
-            fontWeight: 500,
-            textDecoration: "none",
-            display: "block",
-          }}
-        >
-          View my bookings
-        </Link>
-        <Link
-          to="/"
-          style={{
-            fontSize: 13,
-            color: "var(--color-text-secondary)",
-            marginTop: 4,
-          }}
-        >
-          Search more flights
-        </Link>
+        <div className="flex flex-col gap-4">
+          <button
+            onClick={downloadTicket}
+            disabled={downloading}
+            className="w-full bg-primary hover:bg-accent text-surface py-3.5 rounded-xl font-semibold transition-all shadow-sm hover:shadow-md disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-2"
+          >
+            {downloading ? "Generating PDF..." : (
+              <><span>📄</span> Download e-ticket</>
+            )}
+          </button>
+          
+          <Link
+            to="/dashboard"
+            className="w-full bg-transparent text-primary border-2 border-primary hover:bg-primary/5 py-3 rounded-xl font-semibold transition-all flex justify-center items-center"
+          >
+            View my bookings
+          </Link>
+          
+          <Link
+            to="/"
+            className="text-sm font-medium text-text-secondary hover:text-primary mt-2 transition-colors"
+          >
+            Search more flights
+          </Link>
+        </div>
       </div>
     </div>
   );

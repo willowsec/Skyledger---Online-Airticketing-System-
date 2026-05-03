@@ -20,7 +20,7 @@ router.post("/logout", logout);
 router.get("/refresh", refresh);
 router.post("/resend-otp", resendOTP);
 router.post("/forgot-password", forgotPassword);
-export default router;
+
 
 // Redirect user to Google
 router.get(
@@ -51,3 +51,5 @@ router.get(
     );
   },
 );
+
+export default router;

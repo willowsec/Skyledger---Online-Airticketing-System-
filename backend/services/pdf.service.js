@@ -20,8 +20,9 @@ export const generateETicketPDF = async (booking) => {
     const flight = booking.flightId;
     const airline = flight.airlineId;
 
-    // ── QR code encodes booking ID for airport scanners ──
-    const qrDataUrl = await QRCode.toDataURL(booking._id.toString(), {
+    // ── QR code encodes verification URL ──
+    const verificationUrl = `${process.env.CLIENT_URL}/verify-ticket/${booking._id}`;
+    const qrDataUrl = await QRCode.toDataURL(verificationUrl, {
       width: 120,
       margin: 1,
     });

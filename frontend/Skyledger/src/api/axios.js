@@ -2,13 +2,15 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: "/api",
   withCredentials: true,
 });
 
 let accessToken = null;
 
-export const setToken = (token) => [(accessToken = token)];
+export const setToken = (token) => {
+  accessToken = token;
+};
 
 //using interceptor to add the token to the header of every  request
 api.interceptors.request.use((cfg) => {
@@ -20,12 +22,24 @@ api.interceptors.request.use((cfg) => {
 api.interceptors.response.use(
   (r) => r,
   async (err) => {
-    if (err.response?.status === 401 && !err.config._retry) {
-      err.config._retry = true;
-      const { data } = await api.get("/auth/refresh");
-      setToken(data.accessToken);
-      err.config.headers.Authorization = `Bearer ${data.accessToken}`;
-      return api(err.config);
+    const originalRequest = err.config;
+    // If 401 and it's not the refresh request itself, try to refresh
+    if (
+      err.response?.status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.url.includes("/auth/refresh")
+    ) {
+      originalRequest._retry = true;
+      try {
+        const { data } = await api.get("/auth/refresh");
+        setToken(data.accessToken);
+        originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
+        return api(originalRequest);
+      } catch (refreshErr) {
+        // If refresh fails, clear token and reject
+        setToken(null);
+        return Promise.reject(refreshErr);
+      }
     }
     return Promise.reject(err);
   },

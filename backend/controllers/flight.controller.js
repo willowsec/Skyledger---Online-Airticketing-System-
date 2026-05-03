@@ -118,6 +118,7 @@ export const getSeatMap = async (req, res, next) => {
     const processed = seats.map((s) => {
       const holdExpired = s.heldUntil && s.heldUntil < now;
       return {
+        _id: s._id,
         seatNumber: s.seatNumber,
         cabinClass: s.cabinClass,
         isAvailable: holdExpired ? true : s.isAvailable,

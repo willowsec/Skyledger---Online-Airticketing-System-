@@ -15,101 +15,80 @@ export default function AdminBookings() {
 
   const load = async () => {
     setLoading(true);
-    const { data } = await api.get("/admin/bookings", {
-      params: { ...filters, page },
-    });
-    setBookings(data.bookings);
-    setTotal(data.total);
-    setLoading(false);
+    try {
+      const { data } = await api.get("/admin/bookings", {
+        params: { ...filters, page },
+      });
+      setBookings(data.bookings || []);
+      setTotal(data.total || 0);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters, page]);
 
   const exportCSV = async () => {
-    const res = await api.get("/admin/bookings/export", {
-      params: filters,
-      responseType: "blob",
-    });
-    const url = URL.createObjectURL(new Blob([res.data], { type: "text/csv" }));
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `bookings-${Date.now()}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+    try {
+      const res = await api.get("/admin/bookings/export", {
+        params: filters,
+        responseType: "blob",
+      });
+      const url = URL.createObjectURL(new Blob([res.data], { type: "text/csv" }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `bookings-${Date.now()}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      window.alert("Failed to export CSV.");
+    }
   };
 
-  const inputStyle = {
-    padding: "7px 11px",
-    borderRadius: 7,
-    border: "1px solid var(--color-border-tertiary)",
-    background: "var(--color-background-primary)",
-    color: "var(--color-text-primary)",
-    fontSize: 13,
-  };
-  const BADGE = {
-    CONFIRMED: ["#E1F5EE", "#085041"],
-    CANCELLED: ["#FCEBEB", "#501313"],
-    HOLD: ["#FAEEDA", "#412402"],
-    FAILED: ["#FCEBEB", "#501313"],
+  const STATUS_CLASSES = {
+    CONFIRMED: "bg-success/10 text-success border-success/20",
+    CANCELLED: "bg-error/10 text-error border-error/20",
+    HOLD: "bg-warning/10 text-warning border-warning/20",
+    FAILED: "bg-error/10 text-error border-error/20",
   };
 
   return (
-    <div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 20,
-        }}
-      >
-        <h2 style={{ fontSize: 20, fontWeight: 500 }}>
+    <div className="font-sans">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-h2-section text-text-primary">
           Bookings{" "}
-          <span
-            style={{
-              fontSize: 14,
-              fontWeight: 400,
-              color: "var(--color-text-secondary)",
-            }}
-          >
+          <span className="text-body-base font-normal text-text-secondary ml-2">
             ({total})
           </span>
         </h2>
         <button
           onClick={exportCSV}
-          style={{
-            padding: "8px 16px",
-            background: "transparent",
-            color: "#185FA5",
-            border: "1px solid #185FA5",
-            borderRadius: 8,
-            fontSize: 14,
-            cursor: "pointer",
-          }}
+          className="bg-surface text-primary border border-primary hover:bg-primary/5 px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm flex items-center gap-2"
         >
-          Export CSV
+          <span>📥</span> Export CSV
         </button>
       </div>
 
-      <div
-        style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap" }}
-      >
+      <div className="flex flex-wrap gap-3 mb-6">
         <input
-          placeholder="Search PNR or passenger…"
+          placeholder="Search PNR or passenger..."
           value={filters.search}
           onChange={(e) =>
             setFilters((p) => ({ ...p, search: e.target.value }))
           }
-          style={{ ...inputStyle, flex: 1, minWidth: 180 }}
+          className="w-full sm:flex-1 sm:min-w-[180px] px-4 py-2 rounded-lg border border-slate-200 bg-surface text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all placeholder:text-slate-400"
         />
         <select
           value={filters.status}
           onChange={(e) =>
             setFilters((p) => ({ ...p, status: e.target.value }))
           }
-          style={inputStyle}
+          className="w-full sm:w-auto px-4 py-2 rounded-lg border border-slate-200 bg-surface text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
         >
           <option value="">All status</option>
           {["CONFIRMED", "CANCELLED", "HOLD", "FAILED"].map((s) => (
@@ -118,156 +97,122 @@ export default function AdminBookings() {
             </option>
           ))}
         </select>
-        <input
-          type="date"
-          value={filters.startDate}
-          onChange={(e) =>
-            setFilters((p) => ({ ...p, startDate: e.target.value }))
-          }
-          style={inputStyle}
-        />
-        <input
-          type="date"
-          value={filters.endDate}
-          onChange={(e) =>
-            setFilters((p) => ({ ...p, endDate: e.target.value }))
-          }
-          style={inputStyle}
-        />
+        <div className="flex items-center gap-2">
+          <input
+            type="date"
+            value={filters.startDate}
+            onChange={(e) =>
+              setFilters((p) => ({ ...p, startDate: e.target.value }))
+            }
+            className="w-full sm:w-auto px-4 py-2 rounded-lg border border-slate-200 bg-surface text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
+          />
+          <span className="text-slate-400 font-medium">to</span>
+          <input
+            type="date"
+            value={filters.endDate}
+            onChange={(e) =>
+              setFilters((p) => ({ ...p, endDate: e.target.value }))
+            }
+            className="w-full sm:w-auto px-4 py-2 rounded-lg border border-slate-200 bg-surface text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
+          />
+        </div>
       </div>
 
-      <div
-        style={{
-          background: "var(--color-background-secondary)",
-          border: "1px solid var(--color-border-tertiary)",
-          borderRadius: 10,
-          overflow: "hidden",
-        }}
-      >
-        <table
-          style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}
-        >
-          <thead>
-            <tr>
-              {[
-                "PNR",
-                "Passenger",
-                "Flight",
-                "Route",
-                "Class",
-                "Amount",
-                "Status",
-                "Booked at",
-              ].map((h) => (
-                <th
-                  key={h}
-                  style={{
-                    padding: "10px 14px",
-                    textAlign: "left",
-                    fontSize: 11,
-                    textTransform: "uppercase",
-                    fontWeight: 500,
-                    color: "var(--color-text-secondary)",
-                    borderBottom: "1px solid var(--color-border-tertiary)",
-                  }}
-                >
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
+      <div className="bg-surface border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse min-w-[900px]">
+            <thead className="bg-bg/50">
               <tr>
-                <td
-                  colSpan={8}
-                  style={{
-                    padding: 32,
-                    textAlign: "center",
-                    color: "var(--color-text-secondary)",
-                  }}
-                >
-                  Loading…
-                </td>
-              </tr>
-            ) : (
-              bookings.map((b) => {
-                const [bg, color] = BADGE[b.bookingStatus] || BADGE.FAILED;
-                return (
-                  <tr
-                    key={b._id}
-                    style={{
-                      borderBottom: "1px solid var(--color-border-tertiary)",
-                    }}
+                {[
+                  "PNR",
+                  "Passenger",
+                  "Flight",
+                  "Route",
+                  "Class",
+                  "Amount",
+                  "Status",
+                  "Booked at",
+                ].map((h) => (
+                  <th
+                    key={h}
+                    className="py-3 px-4 text-[11px] font-bold text-text-secondary uppercase tracking-wider border-b border-slate-200"
                   >
-                    <td style={{ padding: "10px 14px", fontWeight: 500 }}>
-                      {b.PNR}
-                    </td>
-                    <td style={{ padding: "10px 14px" }}>
-                      {b.userId?.name}
-                      <br />
-                      <span
-                        style={{
-                          fontSize: 11,
-                          color: "var(--color-text-secondary)",
-                        }}
-                      >
-                        {b.userId?.email}
-                      </span>
-                    </td>
-                    <td
-                      style={{
-                        padding: "10px 14px",
-                        color: "var(--color-text-secondary)",
-                        fontSize: 12,
-                      }}
-                    >
-                      {b.flightId?.flightNumber}
-                    </td>
-                    <td style={{ padding: "10px 14px" }}>
-                      {b.flightId?.origin} → {b.flightId?.destination}
-                    </td>
-                    <td
-                      style={{
-                        padding: "10px 14px",
-                        textTransform: "capitalize",
-                      }}
-                    >
-                      {b.cabinClass}
-                    </td>
-                    <td style={{ padding: "10px 14px" }}>
-                      ₹{b.totalAmount?.toLocaleString("en-IN")}
-                    </td>
-                    <td style={{ padding: "10px 14px" }}>
-                      <span
-                        style={{
-                          padding: "3px 8px",
-                          borderRadius: 20,
-                          fontSize: 10,
-                          fontWeight: 500,
-                          background: bg,
-                          color,
-                        }}
-                      >
-                        {b.bookingStatus}
-                      </span>
-                    </td>
-                    <td
-                      style={{
-                        padding: "10px 14px",
-                        color: "var(--color-text-secondary)",
-                        fontSize: 12,
-                      }}
-                    >
-                      {new Date(b.createdAt).toLocaleDateString("en-IN")}
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {loading ? (
+                <tr>
+                  <td colSpan={8} className="py-12 text-center text-text-secondary">
+                    Loading...
+                  </td>
+                </tr>
+              ) : bookings.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-12 text-center text-text-secondary">
+                    No bookings found.
+                  </td>
+                </tr>
+              ) : (
+                bookings.map((b) => {
+                  const statusClass = STATUS_CLASSES[b.bookingStatus] || STATUS_CLASSES.FAILED;
+                  return (
+                    <tr key={b._id} className="hover:bg-bg/50 transition-colors">
+                      <td className="py-3 px-4 text-sm font-semibold text-text-primary">
+                        {b.PNR}
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="text-sm font-medium text-text-primary">{b.userId?.name || "Guest"}</div>
+                        <div className="text-xs text-text-secondary mt-0.5">{b.userId?.email || ""}</div>
+                      </td>
+                      <td className="py-3 px-4 text-xs text-text-secondary font-medium">
+                        {b.flightId?.flightNumber || "N/A"}
+                      </td>
+                      <td className="py-3 px-4 text-sm font-medium">
+                        {b.flightId?.origin || "?"} &rarr; {b.flightId?.destination || "?"}
+                      </td>
+                      <td className="py-3 px-4 text-sm capitalize">
+                        {b.cabinClass}
+                      </td>
+                      <td className="py-3 px-4 text-sm font-medium">
+                        ₹{b.totalAmount?.toLocaleString("en-IN") || 0}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide border ${statusClass}`}>
+                          {b.bookingStatus}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-xs text-text-secondary">
+                        {new Date(b.createdAt).toLocaleDateString("en-IN")}
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
+
+      {total > 0 && (
+        <div className="flex justify-center items-center gap-2 mt-6">
+          {Array.from({ length: Math.ceil(total / 20) }, (_, i) => (
+            <button
+              key={i}
+              onClick={() => setPage(i + 1)}
+              className={`min-w-[32px] h-8 px-2 rounded-md text-sm font-medium transition-colors border ${
+                page === i + 1
+                  ? "bg-primary text-surface border-primary"
+                  : "bg-surface text-text-secondary border-slate-200 hover:border-primary/30 hover:text-primary"
+              }`}
+            >
+              {i + 1}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

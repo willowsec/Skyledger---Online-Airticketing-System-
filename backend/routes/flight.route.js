@@ -8,7 +8,7 @@ import {
 const router = Router();
 
 router.get("/search", searchFlights);
-router.get("/:id", getFlightById);
 router.get("/:flightId/seats", getSeatMap);
+router.get("/:id", getFlightById);
 
 export default router;

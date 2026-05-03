@@ -1,22 +1,13 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 const NAV = [
   { to: "/admin", label: "📊 Dashboard", end: true },
-  { to: "/admin/flights", label: "✈ Flights" },
+  { to: "/admin/flights", label: "✈️ Flights" },
   { to: "/admin/bookings", label: "🎫 Bookings" },
   { to: "/admin/users", label: "👥 Users" },
   { to: "/admin/reports", label: "📈 Reports" },
 ];
-
-const sidebarStyle = {
-  width: 210,
-  background: "#0C447C",
-  display: "flex",
-  flexDirection: "column",
-  minHeight: "100vh",
-  flexShrink: 0,
-};
 
 export default function AdminLayout() {
   const { user, logout } = useAuth();
@@ -28,72 +19,51 @@ export default function AdminLayout() {
   };
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
-      <aside style={sidebarStyle}>
-        <div
-          style={{
-            padding: "20px 16px 14px",
-            borderBottom: "1px solid rgba(255,255,255,0.12)",
-          }}
-        >
-          <div style={{ color: "#fff", fontWeight: 600, fontSize: 16 }}>
-            ✈ OATS Admin
-          </div>
-          <div
-            style={{
-              color: "rgba(255,255,255,0.5)",
-              fontSize: 11,
-              marginTop: 3,
-            }}
-          >
-            {user?.name}
+    <div className="flex min-h-screen bg-bg font-sans">
+      <aside className="w-64 bg-[#0F172A] flex flex-col min-h-screen shrink-0 text-surface">
+        <div className="p-6 border-b border-white/10">
+          <Link to="/" className="flex items-center gap-2 no-underline group mb-1">
+            <span className="text-xl transition-transform group-hover:-translate-y-0.5 group-hover:scale-110">✈️</span>
+            <span className="text-white font-bold tracking-tight">SkyLedger Admin</span>
+          </Link>
+          <div className="text-white/50 text-xs font-medium uppercase tracking-wider mt-2">
+            Logged in as {user?.name?.split(" ")[0] || "Admin"}
           </div>
         </div>
 
-        <nav style={{ flex: 1, padding: "8px 0" }}>
+        <nav className="flex-1 py-4">
           {NAV.map((n) => (
             <NavLink
               key={n.to}
               to={n.to}
               end={n.end}
-              style={({ isActive }) => ({
-                display: "flex",
-                alignItems: "center",
-                padding: "11px 16px",
-                color: isActive ? "#fff" : "rgba(255,255,255,0.65)",
-                background: isActive ? "rgba(255,255,255,0.12)" : "transparent",
-                borderLeft: isActive
-                  ? "3px solid #60C4F8"
-                  : "3px solid transparent",
-                textDecoration: "none",
-                fontSize: 13,
-                transition: "all 0.15s",
-              })}
+              className={({ isActive }) =>
+                `flex items-center px-6 py-3 text-sm transition-all border-l-4 ${
+                  isActive
+                    ? "text-white bg-white/10 border-accent font-medium"
+                    : "text-white/60 border-transparent hover:text-white hover:bg-white/5"
+                }`
+              }
             >
               {n.label}
             </NavLink>
           ))}
         </nav>
 
-        <button
-          onClick={handleLogout}
-          style={{
-            margin: 12,
-            padding: "8px 0",
-            background: "rgba(255,255,255,0.08)",
-            border: "1px solid rgba(255,255,255,0.15)",
-            borderRadius: 7,
-            color: "rgba(255,255,255,0.7)",
-            fontSize: 13,
-            cursor: "pointer",
-          }}
-        >
-          Logout
-        </button>
+        <div className="p-4">
+          <button
+            onClick={handleLogout}
+            className="w-full py-2.5 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 rounded-lg text-white/80 hover:text-white text-sm font-medium transition-all shadow-sm"
+          >
+            Sign out
+          </button>
+        </div>
       </aside>
 
-      <main style={{ flex: 1, padding: 28, overflow: "auto" }}>
-        <Outlet />
+      <main className="flex-1 p-8 overflow-auto">
+        <div className="max-w-7xl mx-auto">
+          <Outlet />
+        </div>
       </main>
     </div>
   );
